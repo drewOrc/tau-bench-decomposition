@@ -1,0 +1,9 @@
+vendor/
+.env
+*.key
+__pycache__/
+*.pyc
+.DS_Store
+data/trajectories/raw_*.json
+results/**/*.json
+!results/**/summary.json
