@@ -1,8 +1,8 @@
 """Merge τ-bench per-seed result JSONs into aggregated metrics with pass^k + CIs.
 
 Mirrors cost-aware-hybrid-router's merge_seeds.py pattern, adapted for τ-bench:
-  - Input: results/{tag}/seed{N}/results-*.json (from tau_bench.run)
-  - Output: results/{tag}/metrics_merged.json
+  - Input: results/{tag}/{domain}/seed{N}/*.json (from tau_bench.run)
+  - Output: results/{tag}/{domain}/metrics_merged.json
 
 Key metrics:
   - pass^1: mean per-task reward across tasks (pooled across seeds)
@@ -27,20 +27,27 @@ import json
 import statistics
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "results"
 
 
-def load_seed_results(tag: str, seeds: List[int]) -> Dict[int, List[dict]]:
+def load_seed_results(tag: str, seeds: List[int], domain: str = "") -> Dict[int, List[dict]]:
     """Load results-*.json files for each seed. Returns {seed: [records]}."""
     out: Dict[int, List[dict]] = {}
     for seed in seeds:
-        seed_dir = RESULTS / tag / f"seed{seed}"
+        if domain:
+            seed_dir = RESULTS / tag / domain / f"seed{seed}"
+        else:
+            seed_dir = RESULTS / tag / f"seed{seed}"
         files = sorted(seed_dir.glob("results-*.json"))
         if not files:
-            files = sorted(seed_dir.glob("*.json"))
+            # tau-bench names files like tool-calling-gpt-4o-0.0_range_*.json
+            files = sorted(
+                p for p in seed_dir.glob("*.json")
+                if p.name not in ("summary.json", "metrics_merged.json")
+            )
         if not files:
             raise FileNotFoundError(f"No result JSON in {seed_dir}")
         # Take the most recent file per seed directory
@@ -165,10 +172,10 @@ def mcnemar_paired(
     }
 
 
-def compare_tags(tag_a: str, tag_b: str, seeds: List[int]) -> List[dict]:
+def compare_tags(tag_a: str, tag_b: str, seeds: List[int], domain: str = "") -> List[dict]:
     """Per-seed McNemar between two tags (e.g. baseline vs decomposer)."""
-    results_a = load_seed_results(tag_a, seeds)
-    results_b = load_seed_results(tag_b, seeds)
+    results_a = load_seed_results(tag_a, seeds, domain=domain)
+    results_b = load_seed_results(tag_b, seeds, domain=domain)
     out = []
     for seed in seeds:
         a_map = {r["task_id"]: float(r.get("reward", 0.0)) for r in results_a[seed]}
@@ -191,7 +198,7 @@ def main() -> int:
     args = p.parse_args()
 
     print(f"Loading seed results for tag={args.tag}, domain={args.domain}")
-    seed_results = load_seed_results(args.tag, args.seeds)
+    seed_results = load_seed_results(args.tag, args.seeds, domain=args.domain)
     pk = compute_pass_k(seed_results)
 
     merged = {
@@ -205,7 +212,7 @@ def main() -> int:
     }
 
     if args.compare_to:
-        mc_records = compare_tags(args.compare_to, args.tag, args.seeds)
+        mc_records = compare_tags(args.compare_to, args.tag, args.seeds, domain=args.domain)
         merged["mcnemar_vs"] = args.compare_to
         merged["mcnemar_per_seed"] = mc_records
         merged["mcnemar_summary"] = {
@@ -215,7 +222,7 @@ def main() -> int:
             ) if mc_records else 0.0,
         }
 
-    out_path = RESULTS / args.tag / "metrics_merged.json"
+    out_path = RESULTS / args.tag / args.domain / "metrics_merged.json"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w") as f:
         json.dump(merged, f, indent=2)

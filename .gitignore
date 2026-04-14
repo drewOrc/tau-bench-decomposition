@@ -1,9 +1,30 @@
-vendor/
+# Virtual environment
+.venv/
+venv/
+
+# Secrets
 .env
 *.key
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+
+# OS
 .DS_Store
-data/trajectories/raw_*.json
+
+# Vendor (tau-bench clone, not our code)
+vendor/
+
+# Results (large JSON trajectories, keep summaries)
 results/**/*.json
 !results/**/summary.json
+!results/**/metrics_merged.json
+
+# Raw trajectory data
+data/trajectories/raw_*.json
+
+# Logs
+*.log

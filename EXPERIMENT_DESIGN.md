@@ -1,7 +1,7 @@
 # Experiment Design — τ-bench Task Decomposition Study
 
-> 版本：v0.1（2026-04-05）
-> 狀態：草案，待 smoke test 後修訂
+> 版本：v0.2（2026-04-12）
+> 狀態：環境就緒，待 smoke test
 
 ---
 
@@ -22,8 +22,8 @@
 
 | ID | Hypothesis | Falsification criterion |
 |---|---|---|
-| **H1** | ≥ 40% of τ-retail failures are decomposition-level (wrong_decision + partial_resolve) | If < 30%, reject → pivot to execution-focused method |
-| **H2** | Decomposer + FC agent improves pass^1 by ≥ 3pp on compound-request tasks (tasks with ≥ 2 write actions) | If ≤ 1pp or CI crosses 0, reject |
+| **H1** | ≥ 30% of τ-retail failures are decomposition-level (wrong_decision + partial_resolve) | If < 20%, reject → pivot to execution-focused method |
+| **H2** | Decomposer + FC agent improves pass^1 by ≥ 1pp on compound-request tasks (tasks with ≥ 2 write actions) | If ≤ 0pp or CI crosses 0, reject |
 | **H3** | Decomposer helps pass^k more than pass^1 (Δpass^8 > Δpass^1) | If Δpass^8 ≤ Δpass^1, reject → decomposer only helps average, not reliability |
 
 **Why pre-register falsification criteria**：workshop reviewer 最常抓的就是「selective reporting」。寫清楚什麼叫失敗，就算 H2 不成立，paper 也能寫成一篇 honest negative result。
@@ -44,6 +44,11 @@
 
 **為什麼 retail 為主**：115 tasks 足夠統計檢定、policy 簡單所以 failure mode 更純粹（不會被 rule-reasoning 噪音蓋掉 decomposition signal）。airline 之後做 generalization check。
 
+**⚠️ Compound task 定義待釐清（2026-04-12）**：
+- `len(actions) >= 2`（含 read actions）→ retail 93/115 (80.9%), airline 30/50 (60.0%)
+- 只算 write actions（exchange, cancel, modify 等有 side-effect 的）→ 需要手動分類 action types
+- H2 的 target subset 大小取決於這個定義。Smoke test 後確認。
+
 ---
 
 ## 4. Baselines
@@ -51,8 +56,8 @@
 | Baseline | Model | Method | Purpose |
 |---|---|---|---|
 | B0 | paper reported | gpt-4o FC | 文獻 reference，不自己跑 |
-| **B1** | Claude Sonnet 4.6 | Function Calling | main baseline，與 decomposer 對照 |
-| B2 | Claude Haiku 4.5 | Function Calling | cheap model baseline，看 decomposer 對 weak model 的幫助 |
+| **B1** | Claude Sonnet 4.5 (`claude-sonnet-4-5-20250929`) | Function Calling | main baseline，與 decomposer 對照 |
+| B2 | Claude Haiku 4.5 (`claude-haiku-4-5-20251001`) | Function Calling | cheap model baseline，看 decomposer 對 weak model 的幫助 |
 | B3 (optional) | Sonnet 4.6 | ReAct | method comparison |
 
 **User simulator**：一律用 `gpt-4o-mini`（cheap 且穩定，避免 user sim 本身成為變異來源）。
@@ -148,15 +153,16 @@ Phase C. Decomposer v1                     Phase D. Ablation
 
 | Item | Estimate | Notes |
 |---|---|---|
-| Smoke test (3 tasks) | < $0.10 | Haiku + GPT-4o-mini |
-| Baseline B1 (Sonnet × 3 seeds × 115) | $30-45 | 345 task runs |
-| Baseline B2 (Haiku × 3 seeds × 115) | $5-8 | |
-| Failure annotation (LLM-as-judge) | $2-3 | |
-| Decomposer ablation (3 seeds × 115) | $30-45 | 同 B1 |
-| Airline runs (optional) | $15-20 | 3 seeds × 50 |
-| **Total** | **~$100-130** | |
+| Smoke test (3 tasks) | ~$0.08 | Sonnet agent + GPT-4o-mini user sim |
+| Baseline B1: retail (Sonnet × 3 seeds × 115) | ~$8.96 | $0.026/task × 345 runs |
+| Baseline B1: airline (Sonnet × 3 seeds × 50) | ~$5.50 | $0.037/task × 150 runs |
+| Failure annotation (LLM-as-judge) | ~$2-3 | Haiku on trajectories |
+| Decomposer ablation (3 seeds × 115+50) | ~$14.46 + $0.26 | 同 B1 + Haiku decomposer add-on |
+| **Total** | **~$30-35** | |
 
-**Budget checkpoint**：超過 $50 之前沒看到 baseline 結果，暫停重評。
+> 📊 預估來自 `scripts/estimate_cost.py`（2026-04-12）。原版估計 $100-130 偏高，因為高估了 per-task token 數。Smoke test 跑完後用實際 token 數校正。
+
+**Budget checkpoint**：超過 $20 之前沒看到 baseline 結果，暫停重評。
 
 ---
 

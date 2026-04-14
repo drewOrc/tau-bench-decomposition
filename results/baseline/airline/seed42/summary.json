@@ -1,0 +1,13 @@
+{
+  "seed": 42,
+  "env": "airline",
+  "model": "gpt-4o",
+  "model_provider": "openai",
+  "user_model": "gpt-4o",
+  "strategy": "tool-calling",
+  "temperature": 0.0,
+  "num_tasks": 50,
+  "pass_1": 0.48,
+  "n_pass": 24,
+  "mean_reward": 0.48
+}

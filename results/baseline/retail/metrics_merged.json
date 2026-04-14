@@ -1,0 +1,51 @@
+{
+  "config": {
+    "tag": "baseline",
+    "domain": "retail",
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "n_seeds": 3
+  },
+  "pass_k_metrics": {
+    "n_seeds": 3,
+    "n_tasks_complete": 115,
+    "pass_k": 0.3652,
+    "pass_k_count": 42,
+    "pass_1_per_seed": {
+      "42": {
+        "pass_1": 0.6522,
+        "mean_reward": 0.6522,
+        "n": 115
+      },
+      "43": {
+        "pass_1": 0.6609,
+        "mean_reward": 0.6609,
+        "n": 115
+      },
+      "44": {
+        "pass_1": 0.4783,
+        "mean_reward": 0.4783,
+        "n": 115
+      }
+    },
+    "pass_1_pooled": {
+      "point": 0.5971,
+      "correct": 206,
+      "total": 345,
+      "wilson_95ci": {
+        "lower": 0.5445,
+        "upper": 0.6475,
+        "point": 0.5971
+      }
+    },
+    "pass_1_mean_across_seeds": {
+      "mean": 0.5971,
+      "std": 0.103,
+      "min": 0.4783,
+      "max": 0.6609
+    }
+  }
+}

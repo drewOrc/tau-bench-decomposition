@@ -1,0 +1,51 @@
+{
+  "config": {
+    "tag": "baseline",
+    "domain": "airline",
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "n_seeds": 3
+  },
+  "pass_k_metrics": {
+    "n_seeds": 3,
+    "n_tasks_complete": 50,
+    "pass_k": 0.32,
+    "pass_k_count": 16,
+    "pass_1_per_seed": {
+      "42": {
+        "pass_1": 0.48,
+        "mean_reward": 0.48,
+        "n": 50
+      },
+      "43": {
+        "pass_1": 0.54,
+        "mean_reward": 0.54,
+        "n": 50
+      },
+      "44": {
+        "pass_1": 0.46,
+        "mean_reward": 0.46,
+        "n": 50
+      }
+    },
+    "pass_1_pooled": {
+      "point": 0.4933,
+      "correct": 74,
+      "total": 150,
+      "wilson_95ci": {
+        "lower": 0.4145,
+        "upper": 0.5725,
+        "point": 0.4933
+      }
+    },
+    "pass_1_mean_across_seeds": {
+      "mean": 0.4933,
+      "std": 0.0416,
+      "min": 0.46,
+      "max": 0.54
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "seed": 42,
+  "env": "retail",
+  "model": "gpt-4o",
+  "model_provider": "openai",
+  "strategy": "tool-calling",
+  "wall_time_s": 55.0,
+  "num_tasks": 1
+}

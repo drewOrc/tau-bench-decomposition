@@ -4,6 +4,77 @@
 
 ---
 
+## 2026-04-14 — Baseline reproduction complete: τ-retail + τ-airline, 3 seeds each
+
+### 本次工作 / 執行摘要
+- **Smoke test** → API key 設定、venv 建立、單一 task 驗證 pipeline
+- **發現 τ-bench CLI argparse bug**：`run.py` 用 litellm enum 物件當 argparse choices，字串比對永遠失敗。解法：完全重寫 `run_baseline.py`，直接用 Python API（`tau_bench.run.run()` + `RunConfig` Pydantic model），繞過 CLI
+- **Rate limit 除錯**：OpenAI Tier 1 (30K TPM) → 升 Tier 2 (450K TPM)；加 `litellm.num_retries = 5`；concurrency 從 6 降到 2
+- **User simulator 發現**：gpt-4o-mini 作 user simulator → pass^1 = 46.1%（偏低 15pp）。10-task A/B 驗證後確認 gpt-4o user simulator 才是 paper 設定。全量重跑
+- **全量 baseline 完成**：3 seeds × 2 domains = 6 runs，全部 0 error
+- **目錄重組**：`results/baseline/{retail,airline}/seed*/`，fix `run_baseline.py` 和 `merge_seeds.py` 加 `env` 層
+
+### 核心發現 / 數據
+
+**τ-retail (115 tasks)**
+| Seed | pass^1 | n_pass |
+|------|--------|--------|
+| 42 | 65.2% | 75 |
+| 43 | 66.1% | 76 |
+| 44 | 47.8% | 55 |
+| **Mean ± std** | **59.7% ± 10.3pp** | — |
+| Paper | 61.2% | — |
+| Wilson 95%CI | [54.4%, 64.8%] | — |
+| pass^3 | 36.5% (42/115) | — |
+
+**τ-airline (50 tasks)**
+| Seed | pass^1 | n_pass |
+|------|--------|--------|
+| 42 | 48.0% | 24 |
+| 43 | 54.0% | 27 |
+| 44 | 46.0% | 23 |
+| **Mean ± std** | **49.3% ± 4.2pp** | — |
+| Paper | 35.2% | — |
+| Wilson 95%CI | [41.4%, 57.2%] | — |
+| pass^3 | 32.0% (16/50) | — |
+
+**分析：**
+- Retail mean 59.7% vs paper 61.2%（-1.5pp），paper 數字在我們 95%CI 內 ✅
+- Airline mean 49.3% vs paper 35.2%（+14.1pp），偏高。原因推測：(1) 2026 版 gpt-4o 更強；(2) 50 tasks sample 小→ variance 大
+- Seed 44 retail 異常低（47.8%），拉低 mean 和擴大 std。τ-bench seed 同時影響 user simulator 隨機性和 DB 初始狀態
+- pass^3 大幅低於 pass^1（retail 36.5% vs 59.7%，airline 32.0% vs 49.3%），證實 agent 的 reliability 問題——這正是 decomposer 要解決的
+
+**User simulator A/B 實驗（10 tasks, seed 42）：**
+- gpt-4o-mini user: 5/10 pass
+- gpt-4o user: 9/10 pass
+- 結論：user simulator 品質直接影響 agent 成功率，gpt-4o 是正確設定
+
+### Blockers / 遇到的問題
+- τ-bench CLI argparse bug（已解決，改用 Python API）
+- Rate limit（已解決，Tier 2 + litellm retry + concurrency=2）
+- User simulator（已解決，改用 gpt-4o）
+- Seed 44 retail 異常低（47.8%）——需要在 failure annotation 階段深入分析哪些 task 在 seed 44 失敗
+
+### Next
+- [ ] Failure annotation schema 設計
+- [ ] 分析 seed 44 retail 失敗 pattern
+- [ ] Decomposer v1 設計與實作
+- [ ] Ablation study
+
+### Files / Budget
+- 修改：`src/run_baseline.py`（Python API 重寫、litellm retry、log_dir 加 env 層、default user-model 改 gpt-4o）
+- 修改：`src/merge_seeds.py`（load_seed_results 加 domain 參數、output 路徑加 domain）
+- 新增：`results/baseline/retail/seed{42,43,44}/`（各含 summary.json + checkpoint JSON）
+- 新增：`results/baseline/airline/seed{42,43,44}/`（同上）
+- 新增：`results/baseline/{retail,airline}/metrics_merged.json`
+- 新增：`requirements.txt`、`.env.example`
+- 修改：`.gitignore`（擴展 patterns）
+- 修改：`README.md`（更新 Quick Start、status checkboxes）
+- API cost 估計：~$98/seed × 6 seeds ≈ **~$590**（gpt-4o agent + gpt-4o user simulator）
+- Wall time：retail ~24 min/seed, airline ~11 min/seed, total ~105 min
+
+---
+
 ## 2026-04-12 — Environment setup: fresh clone + dependency install + task verification
 
 ### 本次工作 / 執行摘要
