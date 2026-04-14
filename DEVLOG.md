@@ -4,6 +4,69 @@
 
 ---
 
+## 2026-04-14 (晚) — Phase B: Failure annotation + seed 44 anomaly analysis
+
+### 本次工作 / 執行摘要
+- **Annotation schema 設計**：擴展 paper 的 4-category taxonomy 到 7 categories（加 `user_led_astray`、`ambiguous_task`、`none`），加入 `user_behavior`、`decomposition_relevant`、`n_subtasks`/`n_subtasks_completed`、`policy_violation` 欄位。JSON Schema 存 `data/annotation_schema.json`
+- **LLM-as-judge annotator**：完全重寫 `src/annotate_failures.py`，用 gpt-4o-mini 透過 litellm 分類每個失敗 trajectory。每個 annotation 花 ~$0.0004，總成本 ~$0.09
+- **First run crash fix**：seed 43 task 20 LLM judge 回傳 unparseable JSON → 加多層 fallback（nested try/except、`default=str` serialization、main loop try/except with "unknown" fallback）
+- **全量 annotation 完成**：139 retail + 76 airline = 215 total annotations
+- **Seed 44 深入分析**：cross-seed 比較找出 21 個 tasks 只在 seed 44 失敗，81% 屬 USER_DIVERGES_EARLY pattern
+
+### 核心發現 / 數據
+
+**τ-retail failure distribution (139 failures, 3 seeds)**
+| Category | Count | % |
+|----------|-------|---|
+| wrong_decision | 67 | 48.2% |
+| partial_resolve | 55 | 39.6% |
+| wrong_argument | 12 | 8.6% |
+| wrong_info | 4 | 2.9% |
+| unknown | 1 | 0.7% |
+| **Decomposition-relevant** | **137/139** | **98.6%** |
+
+**τ-airline failure distribution (76 failures, 3 seeds)**
+| Category | Count | % |
+|----------|-------|---|
+| wrong_decision | 50 | 65.8% |
+| partial_resolve | 20 | 26.3% |
+| wrong_argument | 3 | 3.9% |
+| wrong_info | 3 | 3.9% |
+| **Decomposition-relevant** | **73/76** | **96.1%** |
+
+**Seed 44 anomaly：**
+- 21 tasks fail ONLY in seed 44（pass in 42+43）
+- 全部 reward=0（complete failure，非 partial）
+- 81% pattern = USER_DIVERGES_EARLY：user simulator 在 seed 44 走不同對話路徑
+- 範例 task 36：seed 42 user 要求換便宜商品（agent pass），seed 44 user 要求直接取消訂單（agent fail）
+- 結論：seed variance 主要由 user simulator 驅動，非 agent 能力差異
+
+**⚠️ LLM judge bias 發現：**
+- Judge 分類 0% `user_led_astray`，但 seed 44 分析顯示 user divergence 是主因
+- Judge 從 agent 視角評估，無法辨識 user simulator 行為造成的失敗
+- `decomposition_relevant` ~98% 可能高估——judge 傾向標 true
+- **需要 manual spot-check ~20 annotations 來校準**
+
+### Blockers / 遇到的問題
+- LLM judge unparseable JSON（已解決，加多層 fallback）
+- Judge bias：0% user_led_astray vs seed 44 分析 81% user-driven（待 manual review）
+- decomposition_relevant 過高（98%）需校準（待 manual spot-check）
+
+### Next
+- [ ] Manual spot-check ~20 annotations（10 retail + 10 airline）
+- [ ] Recalibrate judge prompt（如果 spot-check 確認 bias）
+- [ ] Decomposer v1 設計與實作（Phase C）
+- [ ] Ablation study（Phase D）
+
+### Files / Budget
+- 新增：`data/annotation_schema.json`（JSON Schema，7 categories + 9 fields）
+- 重寫：`src/annotate_failures.py`（LLM-as-judge pipeline，~310 LOC）
+- 新增：`data/annotations/baseline_retail_annotations.jsonl`（139 annotations）
+- 新增：`data/annotations/baseline_airline_annotations.jsonl`（76 annotations）
+- API cost：~$0.09（gpt-4o-mini, 337K input + 15K output tokens retail; ~similar airline）
+
+---
+
 ## 2026-04-14 — Baseline reproduction complete: τ-retail + τ-airline, 3 seeds each
 
 ### 本次工作 / 執行摘要
@@ -56,8 +119,8 @@
 - Seed 44 retail 異常低（47.8%）——需要在 failure annotation 階段深入分析哪些 task 在 seed 44 失敗
 
 ### Next
-- [ ] Failure annotation schema 設計
-- [ ] 分析 seed 44 retail 失敗 pattern
+- [x] Failure annotation schema 設計 ✅ (2026-04-14 晚)
+- [x] 分析 seed 44 retail 失敗 pattern ✅ (2026-04-14 晚)
 - [ ] Decomposer v1 設計與實作
 - [ ] Ablation study
 

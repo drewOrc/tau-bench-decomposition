@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "tau-bench Failure Annotation",
+  "description": "Per-task failure annotation for tau-bench baseline results. Extends paper's 4-category taxonomy with user-behavior and decomposition dimensions.",
+  "type": "object",
+  "required": ["task_id", "seed", "domain", "reward", "annotation"],
+  "properties": {
+    "task_id": { "type": "integer" },
+    "seed": { "type": "integer" },
+    "domain": { "type": "string", "enum": ["retail", "airline"] },
+    "reward": { "type": "number", "minimum": 0, "maximum": 1 },
+    "annotation": {
+      "type": "object",
+      "required": ["primary_failure", "user_behavior", "decomposition_relevant", "confidence"],
+      "properties": {
+        "primary_failure": {
+          "type": "string",
+          "enum": [
+            "wrong_argument",
+            "wrong_decision",
+            "wrong_info",
+            "partial_resolve",
+            "user_led_astray",
+            "ambiguous_task",
+            "none"
+          ],
+          "description": "Primary failure category. First 4 match paper's taxonomy. 'user_led_astray' = user simulator steered conversation to wrong outcome. 'ambiguous_task' = task instruction allows multiple interpretations. 'none' = task passed (reward=1)."
+        },
+        "secondary_failure": {
+          "type": ["string", "null"],
+          "enum": [
+            "wrong_argument",
+            "wrong_decision",
+            "wrong_info",
+            "partial_resolve",
+            "user_led_astray",
+            "ambiguous_task",
+            null
+          ],
+          "description": "Optional secondary failure if multiple issues contributed."
+        },
+        "user_behavior": {
+          "type": "string",
+          "enum": [
+            "cooperative",
+            "underspecified",
+            "contradictory",
+            "premature_stop"
+          ],
+          "description": "How the user simulator behaved. 'cooperative' = gave clear info when asked. 'underspecified' = gave vague or incomplete answers. 'contradictory' = gave conflicting info. 'premature_stop' = ended conversation before task was complete."
+        },
+        "decomposition_relevant": {
+          "type": "boolean",
+          "description": "True if a pre-decomposer listing sub-goals could have prevented this failure. Applies to partial_resolve and some wrong_decision cases."
+        },
+        "n_subtasks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of distinct sub-tasks the user requested (e.g., 'change address for all 3 orders' = 3)."
+        },
+        "n_subtasks_completed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of sub-tasks the agent successfully completed."
+        },
+        "policy_violation": {
+          "type": "boolean",
+          "description": "True if the agent violated an explicit domain policy rule."
+        },
+        "tool_error_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of tool call errors (API returned error)."
+        },
+        "turn_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total turns in the trajectory."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Annotator confidence in this classification (1.0 = certain, 0.5 = uncertain)."
+        },
+        "rationale": {
+          "type": "string",
+          "description": "Brief explanation of why this failure category was chosen. Max 2 sentences."
+        }
+      }
+    }
+  }
+}
