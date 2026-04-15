@@ -59,28 +59,56 @@ Notes: We use the 2026 gpt-4o snapshot, which is stronger than the 2024 version 
 
 ---
 
+## Main Results (Phase C — 22 complex retail tasks, 3 seeds)
+
+| Condition | Mean pass^1 | Δ from Baseline | p-value (McNemar) | Decomposer Cost |
+|-----------|------------|-----------------|-------------------|-----------------|
+| Baseline | 34.8% ± 18.3pp | — | — | — |
+| Rule-based | 33.3% ± 11.3pp | −1.5pp | — | $0 (regex) |
+| **Oracle** | **57.6% ± 11.3pp** | **+22.7pp** | **0.007** | $0 (gold) |
+| Tiny-LM | 36.4% ± 3.7pp | +1.5pp | 1.000 | $0.0007/call |
+
+**Key finding:** Decomposition quality gap = 21.2pp. Oracle decomposition works (+22.7pp), but automated tiny-LM decomposer captures only 50% of gold sub-goals and gains just +1.5pp. The bottleneck is decomposition quality, not the concept itself.
+
+---
+
 ## Folder Layout
 
 ```
 tau-bench-decomposition/
 ├── README.md                         ← this file
 ├── DEVLOG.md                         ← experiment log (newest first)
+├── EXPERIMENT_DESIGN.md              ← hypotheses + falsification criteria
 ├── requirements.txt                  ← pinned Python dependencies
 ├── .env.example                      ← API key template
 ├── notes/
 │   ├── 01_tau_bench_paper_notes.md   ← paper key points + failure taxonomy
-│   └── 02_setup_guide.md             ← install, env vars, smoke test, budget
+│   ├── 02_setup_guide.md             ← install, env vars, smoke test, budget
+│   ├── 05_related_work.md            ← literature positioning (2×2 matrix)
+│   └── 06_paper_outline.md           ← paper structure
 ├── vendor/tau-bench-clean/           ← upstream repo (gitignored, commit 59a200c)
-├── data/                             ← annotations, trajectories
+├── data/
+│   ├── oracle_subgoals.json          ← gold sub-goals for 22 complex tasks
+│   ├── annotations/                  ← failure annotations (215 total)
+│   └── task_profile.json             ← task metadata
 ├── src/
-│   ├── run_baseline.py               ← main experiment runner (Python API)
+│   ├── run_baseline.py               ← baseline experiment runner (Python API)
+│   ├── run_decomposer.py             ← decomposer experiment runner
 │   ├── merge_seeds.py                ← aggregate pass^1/pass^k + Wilson CI
-│   ├── agent_with_decomposer.py      ← decomposer wrapper (Phase C)
-│   └── decomposer/                   ← decomposer modules
+│   ├── analyze_4conditions.py        ← 4-condition comparison + statistical tests
+│   ├── annotate_failures.py          ← LLM-as-judge failure annotator
+│   ├── agent_with_decomposer.py      ← decomposer wrapper for tau-bench agent
+│   └── decomposer/
+│       ├── base.py                   ← ABC with SubGoal + DecompositionResult
+│       ├── rule_based.py             ← regex-based (null result)
+│       ├── tiny_lm.py                ← Claude Haiku 4.5 (~$0.0007/call)
+│       └── oracle.py                 ← gold sub-goal lookup (ceiling analysis)
 └── results/
-    └── baseline/
-        ├── retail/seed{42,43,44}/    ← per-seed summaries + trajectories
-        └── airline/seed{42,43,44}/
+    ├── baseline/retail/seed{42,43,44}/
+    ├── baseline/airline/seed{42,43,44}/
+    ├── decomposer-rule-based/retail/seed{42,43,44}/
+    ├── decomposer-oracle/retail/seed{42,43,44}/
+    └── decomposer-tiny-lm/retail/seed{42,43,44}/
 ```
 
 ---
@@ -95,13 +123,19 @@ pip install -e vendor/tau-bench-clean/
 pip install -r requirements.txt
 
 # 2. Set API keys
-cp .env.example .env  # then fill in your keys
+cp .env.example .env  # then fill in OPENAI_API_KEY and ANTHROPIC_API_KEY
 
 # 3. Smoke test (1 task)
 python src/run_baseline.py --env retail --task-ids 0 --seeds 42
 
 # 4. Full baseline (3 seeds)
 python src/run_baseline.py --env retail --seeds 42 43 44 --concurrency 1
+
+# 5. Run decomposer experiment (e.g., oracle on 22 complex tasks)
+python src/run_decomposer.py --env retail --seeds 42 43 44 --decomposer oracle --concurrency 2
+
+# 6. Compare all 4 conditions
+python src/analyze_4conditions.py
 ```
 
 ---
@@ -111,11 +145,12 @@ python src/run_baseline.py --env retail --seeds 42 43 44 --concurrency 1
 - [x] Read τ-bench paper, extract failure taxonomy
 - [x] Write setup guide
 - [x] Clone repo + smoke test
-- [x] Baseline reproduction (τ-retail 59.7% ± 10.3pp, τ-airline 49.3% ± 4.2pp, 3 seeds)
-- [ ] Failure annotation schema
-- [ ] Decomposer v1
-- [ ] Ablation study
-- [ ] Workshop paper draft
+- [x] Baseline reproduction (τ-retail 59.7% ± 10.3pp, τ-airline 49.3% ± 4.2pp)
+- [x] Failure annotation (215 annotations, 7-category taxonomy)
+- [x] Rule-based decomposer (null result: −1.5pp)
+- [x] Oracle decomposer (+22.7pp, p=0.007)
+- [x] Tiny-LM decomposer (+1.5pp, null; quality gap = 21.2pp)
+- [ ] Workshop paper draft ("Cheap Decomposition, Expensive Execution")
 
 ---
 
@@ -126,3 +161,4 @@ This experiment directly supports the MiuLab application:
 2. **Public benchmark** — τ-bench is from Sierra (Yao et al. 2024), credible baseline
 3. **Narrative continuity** — extends the cost-aware cascade story from single-turn to multi-turn
 4. **Reproducibility** — MIT-licensed public code + fixed seeds
+5. **Novel contribution** — first quantification of decomposition quality gap on multi-turn tool-agent tasks
