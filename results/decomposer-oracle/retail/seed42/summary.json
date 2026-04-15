@@ -1,0 +1,18 @@
+{
+  "seed": 42,
+  "env": "retail",
+  "model": "gpt-4o",
+  "model_provider": "openai",
+  "user_model": "gpt-4o",
+  "strategy": "tool-calling",
+  "temperature": 0.0,
+  "decomposer": "oracle",
+  "inject_as": "system",
+  "wall_time_s": 317.3,
+  "num_tasks": 22,
+  "pass_1": 0.7273,
+  "n_pass": 16,
+  "mean_reward": 0.7273,
+  "decomposer_total_cost_usd": 0.0,
+  "decomposer_mean_latency_ms": 0.0
+}

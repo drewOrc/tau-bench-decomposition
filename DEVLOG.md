@@ -4,6 +4,82 @@
 
 ---
 
+## 2026-04-15 — Phase C: Decomposer experiments (rule-based null result + oracle ceiling)
+
+### 本次工作 / 執行摘要
+- **Rule-based decomposer 實驗完成**：3 seeds × 115 tasks × concurrency=2
+- **結論：NULL RESULT** — rule-based decomposer 無效
+- **Root cause 分析**：per-task 分析發現 decomposer 品質太差
+  - 27.5% tasks 得到 0 sub-goals（完全沒拆解）
+  - 61.4% tasks 只得到 1 sub-goal（沒有真正 decompose）
+  - 19 tasks 改善 vs 26 tasks 退步 vs 70 tasks 不變
+- **專家會議決策**：4 agents（圖仔/跑哥/阿讀/假教授）一致判斷 null result 源自 decomposer 品質不足，非 decomposition 概念無效。決定做 oracle ceiling analysis。
+- **Oracle decomposer 建構**：
+  - 選 22 個 complex tasks（gt_actions ≥ 7 AND baseline_pass < 3/3）
+  - 人工分析每個 task 的 instruction + ground truth actions，建 gold sub-goals
+  - 建 OracleDecomposer class + 修改 interface 支援 task_index passthrough
+  - Code review 修 4 個 issues（threading.Lock、env guard、strict ValueError、thread-safety comment）
+- **Oracle 實驗啟動中**：22 tasks × 3 seeds × concurrency=2
+
+### 核心發現 / 數據
+
+**Rule-based decomposer（全 115 tasks）：**
+
+| Metric | Baseline | Rule-based | Δ |
+|--------|----------|-----------|---|
+| Mean pass^1 | 59.7% ± 10.3pp | 57.7% ± 4.3pp | -2.0pp |
+| pass^3 | 36.5% | 35.7% | -0.9pp |
+| Seed 42 | 65.2% | 62.6% | -2.6pp |
+| Seed 43 | 66.1% | 55.7%* | -10.4pp |
+| Seed 44 | 47.8% | 54.8% | +7.0pp |
+
+*Seed 43 異常下降可能與 OpenAI quota 中斷有關。
+
+**有趣觀察：** std 從 10.3pp 降到 4.3pp — decomposer 有穩定化效果，即使 mean 略降。
+
+**Oracle decomposer（22 complex tasks）：**
+
+| Metric | Baseline | Rule-based | Oracle | Δ (Oracle vs BL) |
+|--------|----------|------------|--------|-------------------|
+| Mean pass^1 | 34.8% ± 22.4pp | 33.3% ± 13.9pp | **57.6% ± 13.9pp** | **+22.7pp** |
+| pass^3 | 0/22 (0%) | 2/22 (9.1%) | **7/22 (31.8%)** | **+31.8pp** |
+| Seed 42 | 50.0% | 45.5% | 72.7% | +22.7pp |
+| Seed 43 | 45.5% | 36.4% | 54.5% | +9.0pp |
+| Seed 44 | 9.1% | 18.2% | 45.5% | +36.4pp |
+
+- **15/22 tasks 改善**, 4 degraded, 3 same（net +11）
+- pass^3 tasks: 3, 23, 31, 32, 35, 46, 55
+- Degraded tasks: 30, 36, 54, 64（需分析為什麼 oracle 反而更差）
+- Seed 44 從 9.1% → 45.5%，decomposition 對高 variance seeds 特別有效
+
+**結論：decomposition 概念有效（+22.7pp）。問題是 decomposer 品質。下一步測 tiny-LM。**
+
+### Blockers / 遇到的問題
+- **OpenAI quota exceeded**：跑 rule-based 時 3 seeds 並行超過 TPM 450K 限制 → 改為 sequential seeds
+- OpenAI quota 耗盡 → Drew 加值後繼續（patch 跑法）
+- Seed 43 merge 異常 → 用完整新 checkpoint 覆蓋
+
+### Next
+- [x] Rule-based decomposer 實驗
+- [x] 分析 null result root cause
+- [x] 專家會議決策 → oracle ceiling
+- [x] 建 oracle decomposer + gold sub-goals (22 tasks)
+- [x] Oracle 實驗跑完 + 分析結果 → **+22.7pp，概念有效**
+- [ ] tiny-LM decomposer 實驗（oracle 有效，繼續）
+- [ ] 若 oracle 無效 → 重新評估研究方向
+- [ ] Drew 手動 spot-check 10 annotations（`data/annotations/spot_check_10_samples.md`）
+
+### Files / Budget
+- 新增：`data/oracle_subgoals.json`（22 tasks gold sub-goals）
+- 新增：`src/decomposer/oracle.py`
+- 修改：`base.py`, `rule_based.py`, `tiny_lm.py`（**kwargs 簽名）
+- 修改：`agent_with_decomposer.py`（pass task_index）
+- 修改：`run_decomposer.py`（oracle support + threading fix）
+- Rule-based 實驗 API cost：~$87（含 quota 中斷重跑）
+- Oracle 實驗 API cost：~$31（22 tasks × 3 seeds, ~974s total wall time）
+
+---
+
 ## 2026-04-14 (晚) — Phase B: Failure annotation + seed 44 anomaly analysis
 
 ### 本次工作 / 執行摘要
