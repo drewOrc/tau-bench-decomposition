@@ -85,7 +85,9 @@ class ToolCallingAgentWithDecomposer(ToolCallingAgent):
         reward = 0.0
 
         # === Step 1: decompose the first user utterance ===
-        decomp: DecompositionResult = self.decomposer.decompose(obs, domain=self.domain)
+        decomp: DecompositionResult = self.decomposer.decompose(
+            obs, domain=self.domain, task_index=task_index
+        )
         hint = decomp.to_system_hint()
         total_cost += decomp.cost_usd
 

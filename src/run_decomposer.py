@@ -20,6 +20,10 @@ Usage:
     # Ablation: decomposer runs but output not injected
     python src/run_decomposer.py --env retail --seeds 42 43 44 \
         --decomposer rule-based --inject-as none --tag decomposer-rule-ablation
+
+    # Oracle decomposer (ceiling analysis, auto-selects annotated tasks)
+    python src/run_decomposer.py --env retail --seeds 42 43 44 \
+        --decomposer oracle --concurrency 2
 """
 
 from __future__ import annotations
@@ -31,7 +35,7 @@ import random
 import sys
 import time
 import traceback
-import multiprocessing
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
@@ -58,8 +62,11 @@ def build_decomposer(name: str):
     elif name == "tiny-lm":
         from decomposer.tiny_lm import TinyLMDecomposer
         return TinyLMDecomposer()
+    elif name == "oracle":
+        from decomposer.oracle import OracleDecomposer
+        return OracleDecomposer()
     else:
-        raise ValueError(f"Unknown decomposer: {name}. Use 'rule-based' or 'tiny-lm'.")
+        raise ValueError(f"Unknown decomposer: {name}. Use 'rule-based', 'tiny-lm', or 'oracle'.")
 
 
 def run_single_seed(seed: int, args: argparse.Namespace) -> dict:
@@ -109,7 +116,7 @@ def run_single_seed(seed: int, args: argparse.Namespace) -> dict:
     print(f">>> {len(idxs)} tasks | log_dir={log_dir}")
     print(f"{'='*60}\n")
 
-    lock = multiprocessing.Lock()
+    lock = threading.Lock()
     t0 = time.time()
 
     def _run(idx: int):
@@ -225,7 +232,7 @@ def main() -> int:
     p.add_argument("--task-ids", type=int, nargs="+", default=None,
                    help="Run only specific task IDs (for smoke test)")
     p.add_argument("--decomposer", default="rule-based",
-                   choices=["rule-based", "tiny-lm"],
+                   choices=["rule-based", "tiny-lm", "oracle"],
                    help="Decomposer type (default: rule-based)")
     p.add_argument("--inject-as", default="system",
                    choices=["system", "user_prefix", "none"],
@@ -238,6 +245,19 @@ def main() -> int:
     if args.tag is None:
         inject_suffix = f"-{args.inject_as}" if args.inject_as != "system" else ""
         args.tag = f"decomposer-{args.decomposer}{inject_suffix}"
+
+    # Oracle mode: auto-select covered tasks if --task-ids not specified
+    if args.decomposer == "oracle" and args.task_ids is None:
+        if args.env != "retail":
+            print("ERROR: oracle sub-goals only cover retail tasks. "
+                  "Pass --task-ids explicitly for other envs.")
+            return 1
+        from decomposer.oracle import OracleDecomposer
+        _oracle = OracleDecomposer()
+        args.task_ids = sorted(_oracle.covered_task_ids)
+        print(f"Oracle mode: auto-selected {len(args.task_ids)} tasks with "
+              f"gold sub-goals: {args.task_ids}")
+        del _oracle
 
     # Validate API keys
     missing = set()

@@ -81,7 +81,7 @@ class TinyLMDecomposer(Decomposer):
         return sub_goals
 
     def decompose(
-        self, user_utterance: str, domain: str = "retail"
+        self, user_utterance: str, domain: str = "retail", **kwargs
     ) -> DecompositionResult:
         t0 = time.perf_counter()
         resp = self.client.messages.create(

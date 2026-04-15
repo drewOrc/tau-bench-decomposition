@@ -1,0 +1,184 @@
+{
+  "_meta": {
+    "description": "Gold-standard sub-goals for oracle decomposer ceiling analysis.",
+    "selection_criteria": "gt_actions >= 7 AND baseline_pass < 3/3 (22 tasks)",
+    "created": "2026-04-15",
+    "note": "Sub-goals are derived from human analysis of task instructions + ground truth actions. They describe WHAT the agent should do, not HOW (no specific IDs the agent must discover)."
+  },
+  "3": {
+    "instruction_preview": "know how many tshirt options + modify all pending small tshirt to purple polyester v-neck",
+    "sub_goals": [
+      {"action_type": "INFO", "entity": "t-shirt options", "constraint": "count of all available options in store"},
+      {"action_type": "MODIFY", "entity": "all pending orders containing small t-shirts", "constraint": "change to purple, polyester, v-neck, same size"}
+    ]
+  },
+  "19": {
+    "instruction_preview": "return water bottle + exchange pet bed and office chair to cheapest",
+    "sub_goals": [
+      {"action_type": "RETURN", "entity": "water bottle", "constraint": null},
+      {"action_type": "EXCHANGE", "entity": "pet bed", "constraint": "cheapest version available"},
+      {"action_type": "EXCHANGE", "entity": "office chair", "constraint": "cheapest version available"},
+      {"action_type": "INFO", "entity": "savings comparison", "constraint": "money saved by each exchange option; if only one possible, pick the one that saves most"}
+    ]
+  },
+  "20": {
+    "instruction_preview": "upgrade all items to most expensive (shoe same size), pay with GC else PayPal",
+    "sub_goals": [
+      {"action_type": "MODIFY", "entity": "all items in pending orders", "constraint": "upgrade to most expensive option; keep shoe in same size"},
+      {"action_type": "INFO", "entity": "payment", "constraint": "pay price difference with gift card; if insufficient, use PayPal"}
+    ]
+  },
+  "21": {
+    "instruction_preview": "exchange shoes to specific item + conditionally also change another product + GC balance",
+    "sub_goals": [
+      {"action_type": "MODIFY", "entity": "shoes", "constraint": "change to a specific variant the user has in mind; use gift card for charges"},
+      {"action_type": "MODIFY", "entity": "another product in the same order", "constraint": "change to a different variant (user will specify when agent asks for confirmation on first change)"},
+      {"action_type": "INFO", "entity": "gift card balance", "constraint": "report balance after all changes complete"}
+    ]
+  },
+  "22": {
+    "instruction_preview": "change user + all order addresses to NYC, then revert user address",
+    "sub_goals": [
+      {"action_type": "ADDRESS", "entity": "user address", "constraint": "change to 101 Highway, New York, 10001"},
+      {"action_type": "ADDRESS", "entity": "all pending order addresses", "constraint": "change to 101 Highway, New York, 10001"},
+      {"action_type": "ADDRESS", "entity": "user address", "constraint": "revert back to original address"}
+    ]
+  },
+  "23": {
+    "instruction_preview": "exchange helmet + exchange luggage set + modify grill to match delivered one",
+    "sub_goals": [
+      {"action_type": "EXCHANGE", "entity": "helmet", "constraint": "medium size, red color, high ventilation"},
+      {"action_type": "EXCHANGE", "entity": "luggage set", "constraint": "two-piece, black, soft material"},
+      {"action_type": "MODIFY", "entity": "pending grill order", "constraint": "change to same type as the grill already received/delivered"}
+    ]
+  },
+  "28": {
+    "instruction_preview": "return 5 items across orders + cancel recently ordered hose + total refund",
+    "sub_goals": [
+      {"action_type": "RETURN", "entity": "skateboard, garden hose, backpack, keyboard, bed", "constraint": "return all five items across their respective orders"},
+      {"action_type": "CANCEL", "entity": "recently ordered hose", "constraint": "cancel only the hose; if cannot cancel single item, skip entirely"},
+      {"action_type": "INFO", "entity": "total refund amount", "constraint": "sum of all refunds from returns"}
+    ]
+  },
+  "30": {
+    "instruction_preview": "tracking number + exchange/return damaged tablet + conditionally cancel charger + return sneaker",
+    "sub_goals": [
+      {"action_type": "INFO", "entity": "tablet order", "constraint": "provide tracking number"},
+      {"action_type": "EXCHANGE", "entity": "damaged tablet", "constraint": "exchange for same item if available; otherwise return it"},
+      {"action_type": "CANCEL", "entity": "recently ordered charger", "constraint": "only if tablet was returned (not exchanged)"},
+      {"action_type": "RETURN", "entity": "sneaker", "constraint": null}
+    ]
+  },
+  "31": {
+    "instruction_preview": "tracking number + try refund lost tablet + cancel charger + cancel boot keep kettle + return sneaker",
+    "sub_goals": [
+      {"action_type": "INFO", "entity": "tablet order", "constraint": "provide tracking number"},
+      {"action_type": "INFO", "entity": "lost tablet", "constraint": "attempt refund or reorder (user knows it is a long shot)"},
+      {"action_type": "CANCEL", "entity": "recently ordered charger", "constraint": "cancel because tablet cannot be replaced"},
+      {"action_type": "CANCEL", "entity": "boot only from the boot+kettle order", "constraint": "keep the kettle; if cannot cancel single item, do nothing on this order"},
+      {"action_type": "RETURN", "entity": "sneaker", "constraint": null}
+    ]
+  },
+  "32": {
+    "instruction_preview": "tracking number + try refund lost tablet + cancel charger + cancel boot AND kettle + return sneaker",
+    "sub_goals": [
+      {"action_type": "INFO", "entity": "tablet order", "constraint": "provide tracking number"},
+      {"action_type": "INFO", "entity": "lost tablet", "constraint": "attempt refund or reorder (user knows it is a long shot)"},
+      {"action_type": "CANCEL", "entity": "recently ordered charger", "constraint": "cancel because tablet cannot be replaced"},
+      {"action_type": "CANCEL", "entity": "boot and kettle order", "constraint": "cancel entire order"},
+      {"action_type": "RETURN", "entity": "sneaker", "constraint": null}
+    ]
+  },
+  "35": {
+    "instruction_preview": "return expensive non-waterproof speaker + modify laptop 17in to 13in",
+    "sub_goals": [
+      {"action_type": "RETURN", "entity": "speaker", "constraint": "the more expensive one that is NOT water resistant"},
+      {"action_type": "MODIFY", "entity": "17-inch laptop in pending order", "constraint": "change to 13-inch version; prefer i5 over i7; prefer silver or black color"}
+    ]
+  },
+  "36": {
+    "instruction_preview": "card limit $1131, order >$1160; try split payment > cancel expensive item > switch all to cheapest > cancel order",
+    "sub_goals": [
+      {"action_type": "INFO", "entity": "payment options", "constraint": "can the payment be split across two cards?"},
+      {"action_type": "INFO", "entity": "most expensive item", "constraint": "identify the most expensive item and its price; can it be cancelled alone?"},
+      {"action_type": "MODIFY", "entity": "all items in the order", "constraint": "switch to cheapest options to bring total under $1131"},
+      {"action_type": "CANCEL", "entity": "entire order", "constraint": "last resort if nothing else works"}
+    ]
+  },
+  "37": {
+    "instruction_preview": "card limit $1150, order >$1160; try split payment > cancel expensive item > switch all to cheapest > cancel order",
+    "sub_goals": [
+      {"action_type": "INFO", "entity": "payment options", "constraint": "can the payment be split across two cards?"},
+      {"action_type": "INFO", "entity": "most expensive item", "constraint": "identify the most expensive item and its price; can it be cancelled alone?"},
+      {"action_type": "MODIFY", "entity": "all items in the order", "constraint": "switch to cheapest options to bring total under $1150"},
+      {"action_type": "CANCEL", "entity": "entire order", "constraint": "last resort if nothing else works"}
+    ]
+  },
+  "38": {
+    "instruction_preview": "card limit $950, order >$1100; try split > cancel item > switch cheapest > cancel order",
+    "sub_goals": [
+      {"action_type": "INFO", "entity": "payment options", "constraint": "can the payment be split across two cards?"},
+      {"action_type": "INFO", "entity": "most expensive item", "constraint": "identify the most expensive item and its price; can it be cancelled alone?"},
+      {"action_type": "MODIFY", "entity": "all items in the order", "constraint": "switch to cheapest options to bring total under $950"},
+      {"action_type": "CANCEL", "entity": "entire order", "constraint": "last resort if cheapest options still exceed $950"}
+    ]
+  },
+  "39": {
+    "instruction_preview": "update address from FL to Phoenix + cheapest t-shirt price + can agent order it",
+    "sub_goals": [
+      {"action_type": "ADDRESS", "entity": "user address", "constraint": "update from old Florida address to Phoenix, AZ 85033; current address is in user's order"},
+      {"action_type": "INFO", "entity": "cheapest t-shirt", "constraint": "what is the price of the cheapest available t-shirt?"},
+      {"action_type": "INFO", "entity": "ordering", "constraint": "can the agent place a t-shirt order on user's behalf?"}
+    ]
+  },
+  "41": {
+    "instruction_preview": "change jigsaw to easiest+fewest pieces + check/correct all addresses (mention together)",
+    "sub_goals": [
+      {"action_type": "MODIFY", "entity": "1000-piece intermediate jigsaw in pending order", "constraint": "change to easiest difficulty level with fewest pieces"},
+      {"action_type": "ADDRESS", "entity": "all pending order addresses and user address", "constraint": "verify correctness against 445 Maple Drive, Suite 394, Fort Worth, TX 76165; correct if wrong"}
+    ]
+  },
+  "42": {
+    "instruction_preview": "check/correct all addresses first, then change jigsaw to easiest",
+    "sub_goals": [
+      {"action_type": "ADDRESS", "entity": "all pending order addresses and user address", "constraint": "verify correctness against 445 Maple Drive, Suite 394, Fort Worth, TX 76165; correct if wrong"},
+      {"action_type": "MODIFY", "entity": "jigsaw in pending order", "constraint": "change to easiest level with fewest pieces; only if not yet shipped; use PayPal for payment"}
+    ]
+  },
+  "46": {
+    "instruction_preview": "return air purifier + robotic vacuum cleaner + refund info + remaining items total",
+    "sub_goals": [
+      {"action_type": "RETURN", "entity": "air purifier and robotic vacuum cleaner", "constraint": "from recent order; user may provide wrong order ID initially"},
+      {"action_type": "INFO", "entity": "total refund amount", "constraint": "combined refund for both returned items"},
+      {"action_type": "INFO", "entity": "remaining items total", "constraint": "total amount paid for items still in the same order after return"}
+    ]
+  },
+  "49": {
+    "instruction_preview": "exchange IPX7 earbud to cheapest earbud from same order",
+    "sub_goals": [
+      {"action_type": "EXCHANGE", "entity": "wireless earbud with IPX7 water resistance", "constraint": "exchange to cheapest earbud item from the rest of that order; match water resistance level of other purchased earbuds"}
+    ]
+  },
+  "54": {
+    "instruction_preview": "cancel/return all orders except boots (exchange boots to cheaper same-size/material) + total money back",
+    "sub_goals": [
+      {"action_type": "CANCEL", "entity": "all pending orders", "constraint": null},
+      {"action_type": "RETURN", "entity": "all delivered order items except boots", "constraint": null},
+      {"action_type": "EXCHANGE", "entity": "boots", "constraint": "same size, same material, cheaper option only (if cheaper exists)"},
+      {"action_type": "INFO", "entity": "total money back", "constraint": "sum of all refunds from cancellations, returns, and exchange price difference"}
+    ]
+  },
+  "55": {
+    "instruction_preview": "cancel or return ALL possible orders (everything)",
+    "sub_goals": [
+      {"action_type": "CANCEL", "entity": "all pending orders", "constraint": null},
+      {"action_type": "RETURN", "entity": "all items in delivered orders", "constraint": null}
+    ]
+  },
+  "64": {
+    "instruction_preview": "exchange camera for highest resolution waterproof within previous price",
+    "sub_goals": [
+      {"action_type": "EXCHANGE", "entity": "camera", "constraint": "highest resolution, waterproof, price must not exceed what was previously paid"}
+    ]
+  }
+}

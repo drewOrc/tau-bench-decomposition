@@ -85,7 +85,7 @@ class RuleBasedDecomposer(Decomposer):
     name = "rule-based"
 
     def decompose(
-        self, user_utterance: str, domain: str = "retail"
+        self, user_utterance: str, domain: str = "retail", **kwargs
     ) -> DecompositionResult:
         t0 = time.perf_counter()
         verbs = RETAIL_VERBS if domain == "retail" else AIRLINE_VERBS

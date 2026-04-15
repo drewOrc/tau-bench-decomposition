@@ -54,7 +54,7 @@ class Decomposer(ABC):
     name: str = "base"
 
     @abstractmethod
-    def decompose(self, user_utterance: str, domain: str = "retail") -> DecompositionResult:
+    def decompose(self, user_utterance: str, domain: str = "retail", **kwargs) -> DecompositionResult:
         ...
 
     def refresh(
