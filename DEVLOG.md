@@ -4,6 +4,76 @@
 
 ---
 
+## 2026-04-15 (晚) — Phase C complete: Tiny-LM experiment + 4-condition analysis
+
+### 本次工作 / 執行摘要
+- **Tiny-LM decomposer 實驗完成**：Claude Haiku 4.5 自動產生 sub-goals，22 tasks × 3 seeds
+- **四條件完整比較**：baseline / rule-based / oracle / tiny-lm
+- **結論：Decomposition quality gap = 21.2pp** — oracle (+22.7pp) vs tiny-lm (+1.5pp)
+- **Sub-goal 品質分析**：tiny-LM 系統性 under-decompose（只產出 oracle 50% 的 sub-goals）
+- **Variance stabilization 發現**：tiny-LM CV=0.10 vs baseline CV=0.53（5x 降低）
+- **Bug fix**：`load_dotenv(override=True)` — 系統 env 空 ANTHROPIC_API_KEY 蓋掉 .env 值
+
+### 核心發現 / 數據
+
+**四條件比較（22 complex tasks）：**
+
+| Condition | Seed 42 | Seed 43 | Seed 44 | Mean | Std | Δ from BL | p-value |
+|-----------|---------|---------|---------|------|-----|-----------|---------|
+| Baseline | 50.0% | 45.5% | 9.1% | 34.8% | ±18.3pp | — | — |
+| Rule-based | 45.5% | 36.4% | 18.2% | 33.3% | ±11.3pp | -1.5pp | — |
+| **Oracle** | **72.7%** | **54.5%** | **45.5%** | **57.6%** | **±11.3pp** | **+22.7pp** | **0.007** |
+| Tiny-LM | 31.8% | 36.4% | 40.9% | 36.4% | ±3.7pp | +1.5pp | 1.000 |
+
+**Variance stabilization：**
+| Condition | CV | Interpretation |
+|-----------|-----|----------------|
+| Baseline | 0.53 | High variance — seed-sensitive |
+| Rule-based | 0.34 | Moderate reduction |
+| Oracle | 0.20 | Low variance — consistent improvement |
+| Tiny-LM | **0.10** | **Lowest variance** — stabilizing effect even without accuracy gain |
+
+**Sub-goal quality comparison（Tiny-LM vs Oracle）：**
+- Oracle: mean 3.0 sub-goals/task, total 66
+- Tiny-LM: mean 1.5 sub-goals/task, total 33（**50% of oracle**）
+- 18% of tiny-LM sub-goals have "(unclear)" entity
+- 10/22 tasks under-decomposed（ratio < 0.5x of oracle）
+- Key failure: cannot capture multi-step structure from first utterance alone
+
+**Per-task highlights：**
+- Tiny-LM uniquely helped: task 19 (0%→67%), task 42 (0%→67%)
+- Tiny-LM uniquely hurt: task 22 (33%→0%), task 46 (67%→33%)
+- 4 degraded oracle tasks (30, 36, 54, 64): conditional fallback → sequential misinterpretation
+
+**Statistical tests（pooled 66 observations）：**
+- Oracle vs BL: McNemar chi2=7.259, p=0.007; Cohen's d=1.22 (large)
+- Tiny-LM vs BL: McNemar chi2=0.000, p=1.000; Cohen's d=0.09 (negligible)
+
+**Paper story confirmed：**
+Rule-based ($0) → null | Oracle (gold) → +22.7pp | Tiny-LM (~$0.0005/call) → +1.5pp
+Gap = 21.2pp → decomposition quality is the bottleneck, not the concept
+
+### Blockers / 遇到的問題
+- `load_dotenv` 不 override 系統 env → ANTHROPIC_API_KEY="" 蓋掉 .env 值（已修復）
+- Tiny-LM 實驗耗時 ~18 min（3 seeds sequential, concurrency=2）
+
+### Next
+- [x] Tiny-LM decomposer 實驗 ✅
+- [x] 四條件比較分析 ✅
+- [ ] Paper 撰寫（Phase D）
+- [ ] Drew 手動 spot-check 10 annotations（`data/annotations/spot_check_10_samples.md`）
+- [ ] 考慮是否需要 full 115-task tiny-LM run（目前判斷不需要，22-task 子集已足夠）
+
+### Files / Budget
+- 新增：`src/analyze_4conditions.py`（四條件分析腳本）
+- 修改：`src/run_decomposer.py`（load_dotenv override=True）
+- 新增：`results/decomposer-tiny-lm/retail/seed{42,43,44}/`
+- Tiny-LM decomposer API cost: $0.0431（Anthropic, 66 calls）
+- Tiny-LM executor API cost: ~$31（OpenAI gpt-4o, 22 tasks × 3 seeds）
+- Total Phase C API cost: ~$149（rule-based $87 + oracle $31 + tiny-lm $31）
+
+---
+
 ## 2026-04-15 — Phase C: Decomposer experiments (rule-based null result + oracle ceiling)
 
 ### 本次工作 / 執行摘要
@@ -19,7 +89,7 @@
   - 人工分析每個 task 的 instruction + ground truth actions，建 gold sub-goals
   - 建 OracleDecomposer class + 修改 interface 支援 task_index passthrough
   - Code review 修 4 個 issues（threading.Lock、env guard、strict ValueError、thread-safety comment）
-- **Oracle 實驗啟動中**：22 tasks × 3 seeds × concurrency=2
+- **Oracle 實驗完成**：22 tasks × 3 seeds × concurrency=2
 
 ### 核心發現 / 數據
 
@@ -41,7 +111,7 @@
 
 | Metric | Baseline | Rule-based | Oracle | Δ (Oracle vs BL) |
 |--------|----------|------------|--------|-------------------|
-| Mean pass^1 | 34.8% ± 22.4pp | 33.3% ± 13.9pp | **57.6% ± 13.9pp** | **+22.7pp** |
+| Mean pass^1 | 34.8% ± 18.3pp | 33.3% ± 11.3pp | **57.6% ± 11.3pp** | **+22.7pp** |
 | pass^3 | 0/22 (0%) | 2/22 (9.1%) | **7/22 (31.8%)** | **+31.8pp** |
 | Seed 42 | 50.0% | 45.5% | 72.7% | +22.7pp |
 | Seed 43 | 45.5% | 36.4% | 54.5% | +9.0pp |
@@ -49,10 +119,10 @@
 
 - **15/22 tasks 改善**, 4 degraded, 3 same（net +11）
 - pass^3 tasks: 3, 23, 31, 32, 35, 46, 55
-- Degraded tasks: 30, 36, 54, 64（需分析為什麼 oracle 反而更差）
+- Degraded tasks: 30, 36, 54, 64（條件式 fallback 被誤解為順序指令）
 - Seed 44 從 9.1% → 45.5%，decomposition 對高 variance seeds 特別有效
 
-**結論：decomposition 概念有效（+22.7pp）。問題是 decomposer 品質。下一步測 tiny-LM。**
+**結論：decomposition 概念有效（+22.7pp）。問題是 decomposer 品質。**
 
 ### Blockers / 遇到的問題
 - **OpenAI quota exceeded**：跑 rule-based 時 3 seeds 並行超過 TPM 450K 限制 → 改為 sequential seeds
@@ -65,8 +135,7 @@
 - [x] 專家會議決策 → oracle ceiling
 - [x] 建 oracle decomposer + gold sub-goals (22 tasks)
 - [x] Oracle 實驗跑完 + 分析結果 → **+22.7pp，概念有效**
-- [ ] tiny-LM decomposer 實驗（oracle 有效，繼續）
-- [ ] 若 oracle 無效 → 重新評估研究方向
+- [x] tiny-LM decomposer 實驗 → **+1.5pp，品質不足**
 - [ ] Drew 手動 spot-check 10 annotations（`data/annotations/spot_check_10_samples.md`）
 
 ### Files / Budget
