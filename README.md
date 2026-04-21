@@ -61,14 +61,19 @@ Notes: We use the 2026 gpt-4o snapshot, which is stronger than the 2024 version 
 
 ## Main Results (Phase C — 22 complex retail tasks, 3 seeds)
 
-| Condition | Mean pass^1 | Δ from Baseline | p-value (McNemar) | Decomposer Cost |
-|-----------|------------|-----------------|-------------------|-----------------|
-| Baseline | 34.8% ± 18.3pp | — | — | — |
-| Rule-based | 33.3% ± 11.3pp | −1.5pp | — | $0 (regex) |
-| **Oracle** | **57.6% ± 11.3pp** | **+22.7pp** | **0.007** | $0 (gold) |
-| Tiny-LM | 36.4% ± 3.7pp | +1.5pp | 1.000 | $0.0007/call |
+| Condition | Mean pass^1 | Δ from BL | OR | Decomposer Cost |
+|-----------|------------|-----------|-----|-----------------|
+| Baseline | 34.8% ± 22.4pp | — | — | — |
+| Rule-based | 33.3% ± 13.9pp | −1.5pp | — | $0 (regex) |
+| **Oracle** | **57.6% ± 13.9pp** | **+22.7pp** | **3.5** | $0 (gold) |
+| Tiny-LM | 36.4% ± 4.5pp | +1.5pp | 1.07 | $0.0007/call |
+| Same-model | 34.8% ± 2.6pp | +0.0pp | 1.00 | $0.001/call |
 
-**Key finding:** Decomposition quality gap = 21.2pp. Oracle decomposition works (+22.7pp), but automated tiny-LM decomposer captures only 50% of gold sub-goals and gains just +1.5pp. The bottleneck is decomposition quality, not the concept itself.
+**Key findings:**
+- **Planning quality gap = 22.7pp** (oracle 57.6% vs same-model 34.8%). Oracle decomposition works, but automated decomposers capture only 50% of gold sub-goals.
+- **Same-model ablation** (gpt-4o as both planner and executor) rules out model capability: gains 0.0pp, identical to tiny-LM (p=1.0). The gap is information-limited, not model-limited.
+- **Majority-vote robustness check** (n=22 independent tasks): oracle vs baseline is directionally consistent but underpowered (p=0.75). Evidence rests on effect size (OR=3.5) and cross-seed consistency.
+- **Variance stabilization**: all planning conditions reduce cross-seed variance (baseline CV=0.64 → same-model CV=0.08).
 
 ---
 
@@ -89,26 +94,30 @@ tau-bench-decomposition/
 ├── vendor/tau-bench-clean/           ← upstream repo (gitignored, commit 59a200c)
 ├── data/
 │   ├── oracle_subgoals.json          ← gold sub-goals for 22 complex tasks
-│   ├── annotations/                  ← failure annotations (215 total)
+│   ├── annotations/                  ← failure annotations (215 total) + 10-sample spot-check
 │   └── task_profile.json             ← task metadata
 ├── src/
 │   ├── run_baseline.py               ← baseline experiment runner (Python API)
 │   ├── run_decomposer.py             ← decomposer experiment runner
 │   ├── merge_seeds.py                ← aggregate pass^1/pass^k + Wilson CI
-│   ├── analyze_4conditions.py        ← 4-condition comparison + statistical tests
+│   ├── analyze_4conditions.py        ← 5-condition comparison + statistical tests
+│   ├── mcnemar_per_seed.py           ← per-seed McNemar analysis
+│   ├── mcnemar_majority_vote.py      ← majority-vote McNemar (n=22 independent)
 │   ├── annotate_failures.py          ← LLM-as-judge failure annotator
 │   ├── agent_with_decomposer.py      ← decomposer wrapper for tau-bench agent
 │   └── decomposer/
 │       ├── base.py                   ← ABC with SubGoal + DecompositionResult
 │       ├── rule_based.py             ← regex-based (null result)
 │       ├── tiny_lm.py                ← Claude Haiku 4.5 (~$0.0007/call)
+│       ├── same_model.py             ← gpt-4o same-model ablation (~$0.001/call)
 │       └── oracle.py                 ← gold sub-goal lookup (ceiling analysis)
 └── results/
     ├── baseline/retail/seed{42,43,44}/
     ├── baseline/airline/seed{42,43,44}/
     ├── decomposer-rule-based/retail/seed{42,43,44}/
     ├── decomposer-oracle/retail/seed{42,43,44}/
-    └── decomposer-tiny-lm/retail/seed{42,43,44}/
+    ├── decomposer-tiny-lm/retail/seed{42,43,44}/
+    └── decomposer-same-model/retail/seed{42,43,44}/
 ```
 
 ---
@@ -134,8 +143,11 @@ python src/run_baseline.py --env retail --seeds 42 43 44 --concurrency 1
 # 5. Run decomposer experiment (e.g., oracle on 22 complex tasks)
 python src/run_decomposer.py --env retail --seeds 42 43 44 --decomposer oracle --concurrency 2
 
-# 6. Compare all 4 conditions
+# 6. Compare all 5 conditions
 python src/analyze_4conditions.py
+
+# 7. Majority-vote McNemar robustness check
+python src/mcnemar_majority_vote.py
 ```
 
 ---
@@ -148,9 +160,12 @@ python src/analyze_4conditions.py
 - [x] Baseline reproduction (τ-retail 59.7% ± 10.3pp, τ-airline 49.3% ± 4.2pp)
 - [x] Failure annotation (215 annotations, 7-category taxonomy)
 - [x] Rule-based decomposer (null result: −1.5pp)
-- [x] Oracle decomposer (+22.7pp, p=0.007)
+- [x] Oracle decomposer (+22.7pp, OR=3.5)
 - [x] Tiny-LM decomposer (+1.5pp, null; quality gap = 21.2pp)
-- [ ] Workshop paper draft ("Cheap Decomposition, Expensive Execution")
+- [x] Same-model ablation (gpt-4o planner, +0.0pp; rules out model capability)
+- [x] Majority-vote McNemar robustness check (n=22 independent tasks)
+- [x] 10-sample human spot-check of failure taxonomy (80% agreement)
+- [x] Workshop paper draft ("Cheap Decomposition, Expensive Execution")
 
 ---
 

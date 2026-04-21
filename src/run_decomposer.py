@@ -65,8 +65,11 @@ def build_decomposer(name: str):
     elif name == "oracle":
         from decomposer.oracle import OracleDecomposer
         return OracleDecomposer()
+    elif name == "same-model":
+        from decomposer.same_model import SameModelDecomposer
+        return SameModelDecomposer()
     else:
-        raise ValueError(f"Unknown decomposer: {name}. Use 'rule-based', 'tiny-lm', or 'oracle'.")
+        raise ValueError(f"Unknown decomposer: {name}. Use 'rule-based', 'tiny-lm', 'oracle', or 'same-model'.")
 
 
 def run_single_seed(seed: int, args: argparse.Namespace) -> dict:
@@ -232,7 +235,7 @@ def main() -> int:
     p.add_argument("--task-ids", type=int, nargs="+", default=None,
                    help="Run only specific task IDs (for smoke test)")
     p.add_argument("--decomposer", default="rule-based",
-                   choices=["rule-based", "tiny-lm", "oracle"],
+                   choices=["rule-based", "tiny-lm", "oracle", "same-model"],
                    help="Decomposer type (default: rule-based)")
     p.add_argument("--inject-as", default="system",
                    choices=["system", "user_prefix", "none"],
@@ -246,8 +249,8 @@ def main() -> int:
         inject_suffix = f"-{args.inject_as}" if args.inject_as != "system" else ""
         args.tag = f"decomposer-{args.decomposer}{inject_suffix}"
 
-    # Oracle mode: auto-select covered tasks if --task-ids not specified
-    if args.decomposer == "oracle" and args.task_ids is None:
+    # Oracle/same-model mode: auto-select covered tasks if --task-ids not specified
+    if args.decomposer in ("oracle", "same-model") and args.task_ids is None:
         if args.env != "retail":
             print("ERROR: oracle sub-goals only cover retail tasks. "
                   "Pass --task-ids explicitly for other envs.")
@@ -267,6 +270,8 @@ def main() -> int:
         missing.add("OPENAI_API_KEY")
     if args.decomposer == "tiny-lm" and not os.environ.get("ANTHROPIC_API_KEY"):
         missing.add("ANTHROPIC_API_KEY")
+    if args.decomposer == "same-model" and not os.environ.get("OPENAI_API_KEY"):
+        missing.add("OPENAI_API_KEY")
     if missing:
         print(f"ERROR: Missing API keys: {missing}")
         print("Set them in .env or export them.")

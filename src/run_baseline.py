@@ -29,7 +29,7 @@ from dotenv import load_dotenv
 
 # Load .env from project root
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-load_dotenv(PROJECT_ROOT / ".env")
+load_dotenv(PROJECT_ROOT / ".env", override=True)
 
 # Enable litellm retry on rate limit (429) errors.
 # tau-bench's litellm calls default to num_retries=None (no retry),

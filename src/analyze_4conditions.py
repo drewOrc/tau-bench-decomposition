@@ -34,6 +34,10 @@ CONDITIONS = {
         "dir": "decomposer-tiny-lm",
         "full_run": False,  # already 22-task only
     },
+    "same-model": {
+        "dir": "decomposer-same-model",
+        "full_run": False,  # already 22-task only
+    },
 }
 
 
@@ -99,7 +103,7 @@ def main():
             seed_strs.append(f"{n_pass}/{n_tasks}={rate:.1f}%")
 
         mean_rate = sum(rates) / len(rates) if rates else 0
-        std_rate = (sum((r - mean_rate) ** 2 for r in rates) / len(rates)) ** 0.5 if len(rates) > 1 else 0
+        std_rate = (sum((r - mean_rate) ** 2 for r in rates) / (len(rates) - 1)) ** 0.5 if len(rates) > 1 else 0
         condition_means[cond_name] = mean_rate
         condition_per_seed[cond_name] = rates
 

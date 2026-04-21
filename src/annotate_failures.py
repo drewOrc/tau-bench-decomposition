@@ -30,7 +30,7 @@ import litellm
 from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-load_dotenv(PROJECT_ROOT / ".env")
+load_dotenv(PROJECT_ROOT / ".env", override=True)
 litellm.num_retries = 3
 
 RESULTS_DIR = PROJECT_ROOT / "results"

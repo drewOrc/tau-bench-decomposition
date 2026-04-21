@@ -57,10 +57,10 @@ Would you like to modify
 - [29] USER: Thanks, you too. ###STOP###
 
 ### Drew 的判斷
-- primary_failure: ____
-- decomposition_relevant: ____
-- user_led_astray?: ____
-- 備註: ____
+- primary_failure: **wrong_decision** ✅ 同意法官
+- decomposition_relevant: **True** ✅ 同意法官
+- user_led_astray?: **Weak** — Yusuf 用了 "exchange" 一詞造成語詞誤導，但責任在 agent 沒做語意→狀態轉換
+- 備註: intent mapping 錯誤。Agent 把 user wording 當成 action，沒有結合 order state (pending) 判斷應用 MODIFY 而非 EXCHANGE。
 
 ---
 
@@ -118,10 +118,10 @@ Since the return
 - [25] USER: Alright, I'll place a new order for the waterproof hiking boots then. Thanks for your help!###STOP###
 
 ### Drew 的判斷
-- primary_failure: ____
-- decomposition_relevant: ____
-- user_led_astray?: ____
-- 備註: ____
+- primary_failure: **wrong_decision** ✅ 同意法官
+- decomposition_relevant: **True** ✅ 同意法官（教科書案例——順序依賴）
+- user_led_astray?: **No** — Isabella 明確說了優先 exchange，agent 沒聽
+- 備註: ordering 錯誤（non-commutative dependency）。先做 return 導致訂單狀態改變，exchange 被鎖死。正確順序：exchange → return。
 
 ---
 
@@ -199,10 +199,10 @@ Please confirm if you'd like me to proceed with canceling the e
 - [49] USER: Thanks, you too! ###STOP###
 
 ### Drew 的判斷
-- primary_failure: ____
-- decomposition_relevant: ____
-- user_led_astray?: ____
-- 備註: ____
+- primary_failure: **wrong_decision** ✅ 同意法官
+- decomposition_relevant: **True** ✅ 同意法官
+- user_led_astray?: **No** — Sofia 主動放棄滑板是 voluntary withdrawal，不是誤導
+- 備註: capability misunderstanding。Agent 自己發明了「一張訂單只能換一次」的限制，但 API 支援同一 call 換多個 items（array）。
 
 ---
 
@@ -246,10 +246,10 @@ Once cancel
 - [19] USER: Thank you so much for your help! I appreciate it. ###STOP###
 
 ### Drew 的判斷
-- primary_failure: ____
-- decomposition_relevant: ____
-- user_led_astray?: ____
-- 備註: ____
+- primary_failure: **wrong_decision** ✅ 同意法官
+- decomposition_relevant: **True** ✅ 同意法官（information-gathering decomposition）
+- user_led_astray?: **No** — user 在 agent 提供錯誤前提下做出合理回應（「那我不需要了」）
+- 備註: missing lookup → wrong branch。Agent 沒查有沒有 10x zoom 版本就判斷「做不到」，導致走錯 decision tree 分支（no longer needed vs ordered by mistake）。
 
 ---
 
@@ -296,10 +296,10 @@ You
 - [17] USER: Thank you for processing the exchange. That's all I needed. Have a great day!###STOP###
 
 ### Drew 的判斷
-- primary_failure: ____
-- decomposition_relevant: ____
-- user_led_astray?: ____
-- 備註: ____
+- primary_failure: **wrong_decision** ✅ 同意法官
+- decomposition_relevant: **True** ✅ 同意法官（interaction-enforcing decomposition）
+- user_led_astray?: **No** — 問題是 agent 沒讓 user 選就自己決定了 SKU + 忽略 gift card constraint
+- 備註: missing clarification + constraint ignored。兩個獨立錯誤：(1) 沒列選項就替 user 選了 SKU，(2) gift card 退差價要求被忽略。
 
 ---
 
@@ -374,10 +374,10 @@ Here's the complete list of item
 - [31] USER: Thank you so much for your help. I really appreciate it. Have a great day! ###STOP###
 
 ### Drew 的判斷
-- primary_failure: ____
-- decomposition_relevant: ____
-- user_led_astray?: ____
-- 備註: ____
+- primary_failure: **wrong_decision** ❌ 不同意法官（法官判 partial_resolve）
+- decomposition_relevant: **True** ✅ 同意法官（constraint-locking decomposition）
+- user_led_astray?: **Yes** ❌ 不同意法官（法官判 No）
+- 備註: priority conflict / authority confusion。Agent 做了 e-reader exchange 但換錯 SKU——user simulator 說「換 32GB」偏離了 instruction（應換同一個 8GB item）。法官 rationale 也有事實錯誤（說「沒處理 e-reader」但其實有處理，只是處理錯了）。這是 10 題中第一個確認的 user_led_astray。
 
 ---
 
@@ -447,10 +447,10 @@ You name is Mei Ahmed and your zip code is 78705. You are polite, outgoing. You 
 - [31] USER: Thank you so much for your help. I really appreciate it! ###STOP###
 
 ### Drew 的判斷
-- primary_failure: ____
-- decomposition_relevant: ____
-- user_led_astray?: ____
-- 備註: ____
+- primary_failure: **partial_resolve** ✅ 同意法官
+- decomposition_relevant: **True** ✅ 同意法官
+- user_led_astray?: **No**
+- 備註: execution omission。Agent 列出了 return 計畫且 user 確認了，但只執行了 exchange，完全沒呼叫 return API。與 Sample 6（同 task, seed 42）形成對照：同一 task 在不同 seed 下失敗模式不同（S6=做錯, S7=沒做）。
 
 ---
 
@@ -529,10 +529,10 @@ If you need any more information or assistan
 - [41] USER: Thank you so much for finding that information for me! You've been a great help. ###STOP###
 
 ### Drew 的判斷
-- primary_failure: ____
-- decomposition_relevant: ____
-- user_led_astray?: ____
-- 備註: ____
+- primary_failure: **partial_resolve** ✅ 同意法官
+- decomposition_relevant: **True** ✅ 同意法官（entity-scoped decomposition）
+- user_led_astray?: **No**
+- 備註: entity/state binding error + partial_resolve。Agent 取消了 Order A（夾克），然後把 A 的取消狀態錯套到 Order B（滑板），說「訂單已取消不能改」——但 B 是完全不同的訂單。主標 partial（有 2/3 子任務完成），子錯是 wrong_decision（entity binding error）。
 
 ---
 
@@ -578,10 +578,10 @@ You are emma_smith_8564 living in New York, New York, 10192. You want to return 
 - [23] USER: Thank you! You too! ###STOP###
 
 ### Drew 的判斷
-- primary_failure: ____
-- decomposition_relevant: ____
-- user_led_astray?: ____
-- 備註: ____
+- primary_failure: **wrong_decision** ❌ 不同意法官（法官判 partial_resolve）
+- decomposition_relevant: **True** ✅ 同意法官（fallback-structured decomposition）
+- user_led_astray?: **No**
+- 備註: missing fallback path。Agent 正確判斷 pending 訂單不能 return，但沒有走 fallback（cancel_pending_order）。跟 Sample 1（Yusuf）同族但不同階段：S1 = 選錯 action, S9 = 沒選 action。User instruction 明確寫了「如果不能退，看能不能取消」但 agent 沒執行這個分支。
 
 ---
 
@@ -670,9 +670,40 @@ If the
 - [23] USER: ###STOP###
 
 ### Drew 的判斷
-- primary_failure: ____
-- decomposition_relevant: ____
-- user_led_astray?: ____
-- 備註: ____
+- primary_failure: **partial_resolve** ✅ 同意法官
+- decomposition_relevant: **True** ✅ 同意法官
+- user_led_astray?: **No** — 「神秘人設」沒有影響任務，user 已提供完整資訊
+- 備註: scope omission。Agent 只處理了 user address（改+改回），完全沒展開 order 層級任務（查 pending orders → 改地址）。
 
 ---
+
+## Summary: Human Spot-Check Results (n=10)
+
+**Date:** 2026-04-21
+**Annotator:** Drew (Bo-Yu Chen)
+
+### Agreement Rates
+
+| Dimension | Agree | Disagree | Agreement Rate |
+|-----------|-------|----------|----------------|
+| primary_failure | 8 | 2 | 80% |
+| decomp_relevant | 10 | 0 | 100% |
+| user_led_astray | 9 | 1 | 90% |
+
+### Disagreements
+
+| Sample | Judge | Drew | Reason |
+|--------|-------|------|--------|
+| S6 (task 91, seed 42) | partial_resolve | **wrong_decision** | Agent did process e-reader but exchanged wrong SKU. Judge rationale factually incorrect ("failed to process e-reader"). |
+| S9 (task 69, seed 44) | partial_resolve | **wrong_decision** | 0% completion — agent completed nothing. Missed fallback path (cancel instead of return). partial_resolve requires partial completion. |
+| S6 (task 91, seed 42) | user_led_astray=No | **user_led_astray=Yes** | User simulator said "exchange for 32GB" but instruction says "exchange for same item (8GB)". Simulator deviated from instruction. |
+
+### Key Findings
+
+1. **primary_failure labels collapse distinct failure modes.** Both wrong_decision and partial_resolve are too coarse. Drew identified 10 distinct subtypes across 10 samples: intent mapping, ordering, capability misunderstanding, missing lookup, missing clarification, priority conflict, execution omission, entity binding error, missing fallback, scope omission.
+
+2. **user_led_astray is systematically under-annotated.** Judge reports 0% across all 215 annotations; human spot-check finds 10% (1/10). Sample 6 shows clear user simulator deviation from task instruction.
+
+3. **decomp_relevant is likely inflated.** While 10/10 samples were judged True by both judge and human, Drew notes ~2 cases (Samples 5, 7) where the failure is better attributed to interaction policy or execution reliability rather than decomposition.
+
+4. **Same task, different failure modes across seeds.** Samples 6 and 7 (task 91, seeds 42 vs 44) demonstrate that the same task can fail for fundamentally different reasons (wrong decision vs execution omission), suggesting failure modes are stochastic, not task-inherent.

@@ -8,10 +8,16 @@ try:
 except ImportError:
     TinyLMDecomposer = None  # type: ignore
 
+try:
+    from .same_model import SameModelDecomposer
+except ImportError:
+    SameModelDecomposer = None  # type: ignore
+
 __all__ = [
     "Decomposer",
     "DecompositionResult",
     "SubGoal",
     "RuleBasedDecomposer",
     "TinyLMDecomposer",
+    "SameModelDecomposer",
 ]

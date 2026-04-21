@@ -4,6 +4,144 @@
 
 ---
 
+## 2026-04-21 — Phase D: Same-model ablation + Wave 1 fixes
+
+### 本次工作 / 執行摘要
+- **Same-model ablation (gpt-4o decomposer)**: 22 tasks × 3 seeds, confirming quality gap is information-limited
+- **Wave 1 fixes**: std unification (population→sample), vendor path fix, load_dotenv override, scipy dependency
+- **Paper integration**: All 5-condition results integrated into sections.md (§3.2, Table 4/5/6/7, §5, §6, §7, Abstract)
+- **Expert review findings applied**: Independence caveat, leave-one-seed-out, OR instead of Cohen's d, wording softening
+
+### 核心發現 / 數據
+- **Same-model results**: Seed 42: 8/22 (36.4%), Seed 43: 8/22 (36.4%), Seed 44: 7/22 (31.8%), Mean: 34.8% ± 2.6pp
+- **Same-model Δ from baseline: +0.0pp** (p=0.838, McNemar) — identical to baseline
+- **Same-model vs Tiny-LM: p=1.000** — indistinguishable, confirms quality gap is NOT model-size
+- **Quality gap updated: 22.7pp** (oracle 57.6% vs same-model 34.8%)
+- **Sub-goal metrics**: same-model mean 1.4 sub-goals (vs oracle 3.0, tiny-LM 1.5), 30% unclear entities (vs 18% for tiny-LM)
+- **Variance**: Same-model has lowest CV (0.08) of any condition, even lower than tiny-LM (0.12)
+- **pass^3**: same-model 2/22 (9.1%), tiny-LM 1/22 (4.5%), oracle 7/22 (31.8%)
+- **Decomposer cost**: $0.001/call (gpt-4o) vs $0.0007/call (Haiku 4.5) — both negligible vs $0.85/task executor
+- **Total ablation cost**: ~$31 (22 tasks × 3 seeds × ~$0.47/task)
+
+### Blockers / 遇到的問題
+- (無)
+
+### Next
+- [ ] Wave 2: LaTeX conversion (.tex)
+- [ ] Wave 2: 4 figures (architecture, failure bar, 4-condition dot plot, quality scatter)
+- [ ] Wave 2: References .bib file
+- [ ] Push updated code + results to GitHub
+
+### Files / Budget
+- Modified: `paper/sections.md` (all sections updated for 5-condition)
+- Modified: `src/analyze_4conditions.py` (sample std, same-model condition)
+- Modified: `src/mcnemar_per_seed.py` (same-model condition)
+- Modified: `src/agent_with_decomposer.py` (vendor path fix)
+- Modified: `src/run_baseline.py`, `src/annotate_failures.py` (load_dotenv override)
+- Modified: `src/run_decomposer.py` (same-model support)
+- Modified: `src/decomposer/__init__.py` (same-model import)
+- New: `src/decomposer/same_model.py`
+- New: `results/decomposer-same-model/` (3 seeds)
+- Modified: `requirements.txt` (scipy)
+- API cost: ~$31 (same-model ablation)
+
+---
+
+## 2026-04-16 (晚) — Phase D: Full draft complete + 2 rounds expert review
+
+### 本次工作 / 執行摘要
+- **剩餘 sections 全部完成**：§6 Discussion、§7 Conclusion、§1 Introduction、§2 Related Work、Abstract
+- **Expert review round 2**：4 位專家（假教授🟡、阿讀 4/5、圖仔 17/19 CLEAN、HR姐 B+）
+- **16 項修正全部應用**：
+  - Table 重新編號（§4 Table 1、§5 Tables 2-7，按 reading order）
+  - Failure taxonomy 加入 user_led_astray (0%) 和 ambiguous_task (0%) 完整 7 行
+  - Abstract 加 subset selection caveat
+  - §1 "quality collapses" 軟化為 "is expected to degrade"
+  - §1 刪除重複句 "Repeating the same task..."
+  - §2 加 ReAct、HuggingGPT (Shen et al., 2023)、"To our knowledge" hedge
+  - §2 修 Zhou et al. citation collision（WebArena → S. Zhou et al., 2024）
+  - §6.1 trimming（從照抄 §5 改為指向 Table + 新解讀）
+  - §6.3 刪除重複 "variance estimate is imprecise"
+  - §7 刪除 Cohen's d 贅述
+  - §1/§3.2 長句拆分
+
+### 核心發現 / 數據
+- (無新數據，本次為寫作)
+- Full draft 約 3,700 字，在 4-page workshop 篇幅內
+
+### Blockers / 遇到的問題
+- **假教授 Issue 1 (HIGH)**：§4 failure taxonomy 無 IAA（inter-annotator agreement）。目前已 downgrade claims 為 exploratory + 加 caveats，但 reviewer 可能仍要求至少 spot-check。10-sample protocol 已設計但未執行。
+- **假教授 Issue 3 (MEDIUM)**：缺 same-model decomposition ablation（用 gpt-4o 自己做 decomposer）。列為 stated limitation 或 future work。
+- **Std calculation 待統一**：Table 2 (full baseline) 用 sample std (n-1)，Tables 4/6 用 population std (n)。影響所有 CV 值。
+- **Table numbering in LaTeX**：markdown 的 Table 順序已修正，但最終 LaTeX 需確認
+
+### Next
+- [ ] 假教授 feedback：決定是否跑 10-sample IAA spot-check
+- [ ] 假教授 feedback：決定是否加 same-model ablation 或列為 limitation
+- [ ] 統一 std 計算方法（sample vs population）
+- [ ] LaTeX 轉換（paper/ 目錄下建 .tex）
+- [ ] Figure 製作（4 張：architecture、failure bar chart、4-condition dot plot、quality scatter）
+
+### Files / Budget
+- 修改：`paper/sections.md`（full draft + 2 rounds review）
+- 修改：`DEVLOG.md`
+- API cost：$0（本次純寫作，無 API 呼叫）
+
+---
+
+## 2026-04-16 — Phase D: Paper writing started (Definition + 4 sections + expert review)
+
+### 本次工作 / 執行摘要
+- **Paper outline 升級到 v1.0**：從 v0（pre-experiment 假設版）全面改寫，反映所有 Phase A/B/C 實際結果
+- **Definition 撰寫 (v0.2)**：formal definition of "pre-execution planning"，經 5 位專家 review + 8 項修正
+- **4 個 Section 初稿完成**：§3.1 Definition、§3.2 Four Conditions、§4 Failure Taxonomy、§5 Results（~1,500 字 + 6 張表格）
+- **數據驗證**：73 個數字逐一核對，70 exact match、2 soft match、1 mismatch（已修正）、1 inconsistency（已標記）
+- **Per-seed McNemar 分析**：新計算，揭示 pooled p=0.007 方向一致但 seed 44 貢獻最大
+- **新發現：Oracle vs Tiny-LM McNemar p=0.018** — quality gap 有獨立統計支撐
+- **Expert review round 1**：假教授 Weak Accept，6 位專家共 12 項修正，全部應用
+
+### 核心發現 / 數據
+
+**Per-seed McNemar (Oracle vs BL)：**
+| Seed | BL pass | Oracle pass | Δ | p-value |
+|------|---------|-------------|---|---------|
+| 42 | 50.0% | 72.7% | +22.7pp | 0.228 (n.s.) |
+| 43 | 45.5% | 54.5% | +9.1pp | 0.683 (n.s.) |
+| 44 | 9.1% | 45.5% | +36.4pp | 0.027* |
+| Pooled | — | — | +22.7pp | 0.007** |
+
+**Oracle vs Tiny-LM (新)：** pooled p=0.018* — quality gap 統計顯著
+
+**數據驗證修正：**
+- Table 5 "action types 2-3" → "1-2 per task (mean 1.4)"
+- Task 23 example：從意譯改為引用實際 tiny-LM 輸出
+- §4.1 加 LLM-as-judge citation (Zheng et al., 2023)
+- CV claim 加 n=3 caveat
+- 22-task subset 加「top 19% of action-count distribution」+ conditioning-on-DV 承認
+- §3.1 加 concrete example (Task 19 water bottle + pet bed)
+
+### Blockers / 遇到的問題
+- Std 計算一致性：Table 1 用 sample std (n-1)、Table 2/4 用 population std (n)。需統一，但改了所有 CV 也要改。留到下次統一。
+- Per-seed McNemar 個別不顯著（n=22 underpowered）→ paper 已透明揭露
+
+### Next
+- [ ] 寫 §1 Introduction
+- [ ] 寫 §2 Related Work
+- [ ] 寫 §6 Discussion
+- [ ] 寫 §7 Conclusion
+- [ ] 寫 Abstract（最後寫）
+- [ ] 統一 std 計算方式
+- [ ] Expert review round 2（完整稿）
+
+### Files / Budget
+- 新增：`paper/sections.md`（working draft，4 sections）
+- 新增：`notes/07_definition_draft.md`（definition 設計歷程 v0.2）
+- 更新：`notes/06_paper_outline.md`（v0 → v1.0）
+- 新增：`src/mcnemar_per_seed.py`（per-seed McNemar 分析腳本）
+- API cost: $0（純寫作，無 API 呼叫）
+
+---
+
 ## 2026-04-15 (晚) — Phase C complete: Tiny-LM experiment + 4-condition analysis
 
 ### 本次工作 / 執行摘要

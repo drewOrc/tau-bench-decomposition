@@ -38,7 +38,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 # Make vendor tau-bench importable regardless of cwd
-_VENDOR = Path(__file__).resolve().parents[1] / "vendor" / "tau-bench"
+_VENDOR = Path(__file__).resolve().parents[1] / "vendor" / "tau-bench-clean"
 if _VENDOR.exists() and str(_VENDOR) not in sys.path:
     sys.path.insert(0, str(_VENDOR))
 
