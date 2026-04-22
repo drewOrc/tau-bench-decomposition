@@ -54,7 +54,7 @@ Multi-turn tool-agent tasks require both planning (what sub-tasks to perform) an
 \section{Introduction}
 % ═══════════════════════════════════════════════════════════════
 
-Function-calling agents can now handle multi-turn customer-service conversations, but they remain unreliable. On $\tau$-bench \citep{yao2024tau}, a benchmark of realistic retail and airline support tasks with tool use and policy constraints, state-of-the-art agents pass individual tasks at roughly 60\% (pass\textsuperscript{1}) and succeed on the same task three times in a row at only 35\% (pass\textsuperscript{3}). This reliability gap is the central barrier to deployment.
+Function-calling agents can now handle multi-turn customer-service conversations, but they remain unreliable. On $\tau$-bench~\citep{yao2024tau}, a benchmark of realistic retail and airline support tasks with tool use and policy constraints, state-of-the-art agents pass individual tasks at roughly 60\% (pass\textsuperscript{1}) and succeed on the same task three times in a row at only 35\% (pass\textsuperscript{3}). This reliability gap is the central barrier to deployment.
 
 In cost-aware deployment, the question is not ``which model is best?'' but ``where can a cheaper model substitute without quality loss?'' Two substitution points exist. First, a cheap executor with an expensive planner: quality is expected to degrade because execution in multi-turn tool-agent tasks requires policy compliance, error handling, and multi-step API orchestration. Second, a cheap planner with an expensive executor: untested on multi-turn agents. We test the second option.
 
@@ -69,11 +69,11 @@ Our main finding: oracle planning (gold sub-goals) improves pass\textsuperscript
 
 Two axes organize prior work: \emph{when} decomposition occurs and \emph{whether} the decomposer and executor share the same model.
 
-\paragraph{Upfront decomposition, same model.} Plan-and-Solve \citep{wang2023plan} and Least-to-Most \citep{zhou2023least} decompose problems before solving, in single-turn, tool-free settings. Decomposed Prompting \citep{khot2023decomposed} routes sub-problems to specialized prompts, demonstrating that decomposition and execution need not share the same prompt or model. Our work ports this intuition to multi-turn tool-agent tasks and splits the two stages across models of different cost.
+\paragraph{Upfront decomposition, same model.} Plan-and-Solve~\citep{wang2023plan} and Least-to-Most~\citep{zhou2023least} decompose problems before solving, in single-turn, tool-free settings. Decomposed Prompting~\citep{khot2023decomposed} routes sub-problems to specialized prompts, demonstrating that decomposition and execution need not share the same prompt or model. Our work ports this intuition to multi-turn tool-agent tasks and splits the two stages across models of different cost.
 
-\paragraph{As-needed decomposition, same model.} ReAct \citep{yao2023react} interleaves reasoning with tool actions, forming the default agent loop in $\tau$-bench. ADaPT \citep{prasad2024adapt} recursively decomposes on failure. Tree of Thoughts \citep{yao2023tree} explores reasoning paths with backtracking. Reflexion \citep{shinn2023reflexion} stores verbal self-critiques across attempts. All use the same model for both stages and most incur multiplicative cost. Our decomposer is proactive and costs 0.08\% of the executor.
+\paragraph{As-needed decomposition, same model.} ReAct~\citep{yao2023react} interleaves reasoning with tool actions, forming the default agent loop in $\tau$-bench. ADaPT~\citep{prasad2024adapt} recursively decomposes on failure. Tree of Thoughts~\citep{yao2023tree} explores reasoning paths with backtracking. Reflexion~\citep{shinn2023reflexion} stores verbal self-critiques across attempts. All use the same model for both stages and most incur multiplicative cost. Our decomposer is proactive and costs 0.08\% of the executor.
 
-\paragraph{Cost-aware model selection.} FrugalGPT \citep{chen2023frugalgpt} cascades models for single-turn QA. HuggingGPT \citep{shen2023hugginggpt} routes sub-tasks to specialist \emph{executors}; we use the same executor for all sub-goals with only the \emph{planning} stage delegated. Our earlier work \citep{chen2026routing} applies this principle to single-turn classification; the present paper extends it to multi-turn planning.
+\paragraph{Cost-aware model selection.} FrugalGPT~\citep{chen2023frugalgpt} cascades models for single-turn QA. HuggingGPT~\citep{shen2023hugginggpt} routes sub-tasks to specialist \emph{executors}; we use the same executor for all sub-goals with only the \emph{planning} stage delegated. Our earlier work~\citep{chen2026routing} applies this principle to single-turn classification; we extend it here to multi-turn planning.
 
 \paragraph{$\tau$-bench.} \citet{yao2024tau} introduce $\tau$-bench with pass\textsuperscript{k} exposing brittleness invisible to pass\textsuperscript{1}. No prior work tests upfront decomposition with a cheaper model on a multi-turn tool-agent benchmark.
 
@@ -86,7 +86,13 @@ Two axes organize prior work: \emph{when} decomposition occurs and \emph{whether
 
 We define \emph{pre-execution planning} as parsing a compound user request into an ordered sub-goal list before any tool call. Each sub-goal is a triple of (action\_type, entity, constraint). Action-type specifies which category of operation to perform: in $\tau$-retail, the six types are \textsc{modify}, \textsc{exchange}, \textsc{return}, \textsc{cancel}, \textsc{address}, and \textsc{info}. Entity identification specifies \emph{what} to operate on; the downstream mapping to database IDs is execution. Constraints encode decision rules or are null for unconditional actions.
 
-Unlike Plan-and-Solve \citep{wang2023plan} and Least-to-Most \citep{zhou2023least}, which decompose reasoning problems without specifying operation types, our definition targets proactive, one-shot planning with typed sub-goals. We reserve \emph{execution} for resolving sub-goals into tool calls: database ID discovery, API parameter selection, and policy compliance. Our planning step augments the agent's existing ReAct loop \citep{yao2023react}.
+Unlike Plan-and-Solve~\citep{wang2023plan} and Least-to-Most~\citep{zhou2023least}, which decompose reasoning problems without specifying operation types, our definition targets proactive, one-shot planning with typed sub-goals. We reserve \emph{execution} for resolving sub-goals into tool calls: database ID discovery, API parameter selection, and policy compliance. Our planning step augments the agent's existing ReAct loop~\citep{yao2023react}. Figure~\ref{fig:arch} illustrates the pipeline.
+
+\begin{center}
+\includegraphics[width=\linewidth]{figures/fig_architecture.png}
+\captionof{figure}{Pre-execution planning pipeline. Top: baseline (direct agent execution). Bottom: our approach inserts a decomposer (\$0.0007--\$0.001/call) before the expensive executor (${\sim}$\$0.85/task), adding $<$0.12\% of execution cost.}
+\label{fig:arch}
+\end{center}
 
 \subsection{Five Planning Conditions}\label{sec:conditions}
 
@@ -107,7 +113,7 @@ All five conditions share the same executor (gpt-4o, 2026 snapshot, temperature~
 \section{Failure Taxonomy}\label{sec:taxonomy}
 % ═══════════════════════════════════════════════════════════════
 
-We annotate all 215 failed baseline trajectories (139 retail, 76 airline) using an LLM-as-judge pipeline \citep{zheng2023judging}. A gpt-4o-mini judge classifies each failure into one of seven categories. A 10-sample human spot-check yields 80\% agreement on failure category (8/10). Disagreements arise when the judge labels incomplete execution as \texttt{partial\_resolve} where the human identifies an underlying \texttt{wrong\_decision}. The spot-check identifies one \texttt{user\_led\_astray} case (10\%) where the judge reports 0\%, confirming under-annotation.
+We annotate all 215 failed baseline trajectories (139 retail, 76 airline) using an LLM-as-judge pipeline~\citep{zheng2023judging}. A gpt-4o-mini judge classifies each failure into one of seven categories. A 10-sample human spot-check yields 80\% agreement on failure category (8/10). Disagreements arise when the judge labels incomplete execution as \texttt{partial\_resolve} where the human identifies an underlying \texttt{wrong\_decision}. The spot-check identifies one \texttt{user\_led\_astray} case (10\%) where the judge reports 0\%, confirming under-annotation.
 
 \begin{center}
 \small
@@ -180,7 +186,7 @@ The oracle shows asymmetric improvement in pooled analysis ($n$=66): 21 tasks fl
 
 \textbf{Independence caveat.} Pooling treats 66 pairs as independent, but within-task outcomes share task instructions across seeds. A leave-one-seed-out analysis: without seed~44, $p$=0.146; the other two remain significant.
 
-\textbf{Majority-vote robustness.} Aggregating per-task (pass if $\geq$2/3 seeds succeed) yields $n$=22 independent observations. Oracle 50.0\% vs.\ baseline 40.9\%, +9.1\,pp, $p$=0.75. The loss of significance reflects reduced power (10 vs.\ 27 discordant pairs), not a reversal: oracle maintains the highest majority-vote rate across all five conditions. We report effect sizes as primary evidence throughout.
+\textbf{Majority-vote robustness.} Aggregating per-task (pass if $\geq$2/3 seeds succeed) yields $n$=22 independent observations. Oracle 50.0\% vs.\ baseline 40.9\%, +9.1\,pp, $p$=0.75. The loss of significance reflects reduced power (10 vs.\ 27 discordant pairs), not a reversal: oracle maintains the highest majority-vote rate across all five conditions. A post-hoc power analysis (McNemar, $\alpha$=0.05, 80\% power) estimates ${\sim}$55 tasks are needed to detect an effect of this magnitude; our 22-task subset is underpowered by design. We report effect sizes as primary evidence throughout.
 
 
 \subsection{Variance Stabilization}
@@ -237,7 +243,7 @@ Multi-turn context, retrieval-augmented planning, or domain-specific schemas cou
 \subsection{Limitations}
 
 \begin{enumerate}
-\item \textbf{Single benchmark.} Generalization to WebArena \citep{zhou2024webarena} or SWE-bench \citep{jimenez2024swebench} is untested.
+\item \textbf{Single benchmark.} Generalization to WebArena~\citep{zhou2024webarena} or SWE-bench~\citep{jimenez2024swebench} is untested.
 \item \textbf{Single executor.} Weaker executors may benefit more; stronger executors (o1-class) may benefit less.
 \item \textbf{No human-human IAA.} The LLM-as-judge has known biases; an 80\% human-LLM spot-check (\S\ref{sec:taxonomy}) provides partial validation.
 \item \textbf{Small task subset.} Majority-vote robustness ($n$=22) confirms direction but lacks power ($p$=0.75); the oracle effect should be interpreted through effect size (OR=3.5) and cross-seed consistency.
