@@ -122,6 +122,7 @@ partial\_resolve & 39.6\% & 26.3\% \\
 wrong\_argument & 8.6\% & 3.9\% \\
 wrong\_info & 2.9\% & 3.9\% \\
 user\_led\_astray & 0\% & 0\% \\
+ambiguous\_task & 0\% & 0\% \\
 unknown & 0.7\% & 0\% \\
 \bottomrule
 \end{tabular}
@@ -166,7 +167,7 @@ Figure~\ref{fig:conditions} visualises the main result. Oracle planning is the o
 
 \begin{center}
 \includegraphics[width=\linewidth]{figures/fig_conditions.png}
-\captionof{figure}{Mean pass$^1$ ($\pm$1 std across 3 seeds) for five planning conditions on 22 complex retail tasks. Oracle planning (+22.7\,pp) is the only condition with meaningful improvement. Automated planners also reduce cross-seed variance (narrowing error bars).}
+\captionof{figure}{Mean pass\textsuperscript{1} ($\pm$1 std across 3 seeds) for five planning conditions on 22 complex retail tasks. Oracle planning (+22.7\,pp) is the only condition with meaningful improvement. Automated planners also reduce cross-seed variance (narrowing error bars).}
 \label{fig:conditions}
 \end{center}
 
@@ -219,7 +220,7 @@ Both decomposers add $<$0.12\% of executor cost (\$0.0007--\$0.001/call vs.\ ${\
 
 \subsection{When Does Cheap-Plan-Expensive-Execute Work?}
 
-Oracle planning yields the largest gain (+22.7\,pp, OR=3.5). Neither automated condition improves: the same-model ablation (+0.0\,pp, discordant pairs 12:12) rules out model capability, since even the executor model cannot produce useful decompositions from the first utterance alone. All planning conditions reduce cross-seed variance (baseline CV=0.64 $\to$ same-model CV=0.08), suggesting that structural pre-planning stabilizes behavior even when sub-goal quality is low.
+Oracle planning yields the largest gain (+22.7\,pp, OR=3.5). Neither automated condition improves: the same-model ablation (+0.0\,pp, discordant pairs 12:12) rules out model capability, since even the executor model cannot produce useful decompositions from the first utterance alone. All planning conditions reduce cross-seed variance (from baseline CV=0.64 to same-model CV=0.08), suggesting that structural pre-planning stabilizes behavior even when sub-goal quality is low.
 
 \subsection{The Quality Gap as a Research Target}
 
