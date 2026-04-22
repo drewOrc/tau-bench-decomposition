@@ -84,6 +84,10 @@ tau-bench-decomposition/
 ├── README.md                         ← this file
 ├── DEVLOG.md                         ← experiment log (newest first)
 ├── EXPERIMENT_DESIGN.md              ← hypotheses + falsification criteria
+├── paper/
+│   ├── main.tex/pdf                  ← workshop paper (LaTeX)
+│   ├── main_zh.md                    ← 完整中文翻譯
+│   └── explainer.md/pdf              ← 簡單解釋版（非技術讀者）
 ├── requirements.txt                  ← pinned Python dependencies
 ├── .env.example                      ← API key template
 ├── notes/

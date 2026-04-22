@@ -1,0 +1,97 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\setCJKmainfont{Heiti TC}
+\setmainfont{Times New Roman}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\definecolor{linkblue}{HTML}{0072B2}
+\hypersetup{colorlinks=true,linkcolor=linkblue,urlcolor=linkblue}
+\setlist{nosep}
+
+\title{\textbf{Paper 2 簡單解釋：便宜拆解，昂貴執行}}
+\author{Bo-Yu Chen}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{一句話版本}
+
+\begin{quote}
+AI 客服代理失敗時，問題出在「規劃」還是「執行」？答案是規劃——但目前的自動規劃器還不夠好。
+\end{quote}
+
+\section*{比喻}
+
+想像一個客服代理要處理這個請求：
+
+\begin{quote}
+「我要退那雙鞋、換一頂安全帽、然後把地址改成新的」
+\end{quote}
+
+這其實是\textbf{三件事}。如果代理一開始就知道有三件事要做，表現會好很多。但如果它只看到一句話就直接衝去做，很容易漏掉或搞錯。
+
+我們想知道：\textbf{如果事先幫代理列一張清單（「第一步退鞋、第二步換帽、第三步改地址」），它會不會做得更好？}
+
+\section*{五種實驗條件}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{條件} & \textbf{怎麼做} & \textbf{結果} \\
+\midrule
+基線 & 不給清單，直接做 & 34.8\% 通過率 \\
+規則式 & 用正則表達式自動列清單 & 33.3\%（沒用） \\
+Oracle & 人類寫的完美清單 & \textbf{57.6\%（+22.7pp）} \\
+Tiny-LM & 讓便宜 AI (Haiku) 寫清單 & 36.4\%（幾乎沒用） \\
+同模型 & 讓同一個 AI (gpt-4o) 寫清單 & 34.8\%（完全沒用） \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section*{核心發現}
+
+\begin{enumerate}
+\item \textbf{規劃很重要} — 有了完美清單，通過率從 35\% 跳到 58\%（+22.7pp）
+\item \textbf{但自動清單不夠好} — 不管是便宜還是貴的 AI，自動寫的清單都幾乎沒幫助
+\item \textbf{不是模型太笨} — 用最貴的 gpt-4o 來寫清單也沒用（同模型消融），所以問題不在模型能力
+\item \textbf{問題在資訊不足} — 光看使用者的第一句話，AI 只能猜到一半的子任務。很多資訊要到對話後面才會出現
+\item \textbf{成本超低} — 拆解器只花執行器成本的 0.12\%，成本不是瓶頸，品質才是
+\end{enumerate}
+
+\section*{22.7pp 的差距代表什麼？}
+
+這個數字叫\textbf{規劃品質差距（Planning Quality Gap）}。它告訴我們：
+
+\begin{itemize}
+\item 如果有人能造出一個跟人類一樣好的自動拆解器，AI 客服的可靠性可以大幅提升
+\item 但目前的拆解器（不管大小模型）都只能從第一句話抓到 50\% 的必要資訊
+\item 要彌合這個差距，需要讓拆解器看到更多上下文（多回合對話、查資料庫、領域知識）
+\end{itemize}
+
+這就是未來研究的方向。
+
+\section*{這跟 Paper 1 的關係}
+
+Paper 1 說：\textbf{單回合路由}不需要每次都用 LLM，便宜的文字比對就能處理 74\% 的查詢。
+
+Paper 2 把同樣的想法搬到\textbf{多回合規劃}：能不能用便宜模型做規劃、貴模型做執行？結論是概念可行（oracle +22.7pp），但自動化的品質還不夠。
+
+兩篇共享的核心思想：\textbf{為每個子任務選對大小的模型（cost-aware）。}
+
+\section*{數字速記}
+
+\begin{itemize}
+\item 基準測試：$\tau$-bench（22 個複雜零售任務，3 個種子）
+\item Oracle 提升：+22.7pp（OR=3.5, $p$=0.007）
+\item 自動規劃器提升：+0--1.5pp（不顯著）
+\item 失敗分析：215 筆失敗軌跡，7 類分類法
+\item 總實驗成本：\textasciitilde\$180
+\item 程式碼：\url{https://github.com/drewOrc/tau-bench-decomposition}
+\end{itemize}
+
+\end{document}
