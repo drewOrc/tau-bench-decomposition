@@ -1,9 +1,9 @@
 % Cheap Decomposition, Expensive Execution — ACL Workshop Style (two-column)
-% Compile: pdflatex main.tex && bibtex main && pdflatex main && pdflatex main
+% Compile: pdflatex main.tex (×2 for references)
 \documentclass[11pt,a4paper]{article}
 
 % ─── Two-column ACL-like layout ─────────────────────────────
-\usepackage[a4paper,margin=2.2cm,columnsep=0.6cm]{geometry}
+\usepackage[a4paper,margin=2.5cm,columnsep=0.6cm]{geometry}
 \usepackage{multicol}
 \usepackage{times}
 \usepackage[T1]{fontenc}
@@ -28,12 +28,7 @@
 \setlength{\parindent}{1em}
 \setlist{nosep,leftmargin=1.2em}
 \setlength{\emergencystretch}{3em}
-\captionsetup{font=small,labelfont=bf,skip=4pt}
-\setlength{\intextsep}{6pt}
-\setlength{\floatsep}{6pt}
-\setlength{\textfloatsep}{6pt}
-\setlength{\abovecaptionskip}{4pt}
-\setlength{\belowcaptionskip}{2pt}
+\captionsetup{font=small,labelfont=bf}
 
 % ─── Title block ─────────────────────────────────────────────
 \title{\textbf{Cheap Decomposition, Expensive Execution:\\Quantifying the Planning Quality Gap in Multi-Turn Tool-Agent Tasks}}
@@ -95,15 +90,15 @@ Unlike Plan-and-Solve \citep{wang2023plan} and Least-to-Most \citep{zhou2023leas
 
 \subsection{Five Planning Conditions}\label{sec:conditions}
 
-\textbf{Baseline (no planning).} The standard function-calling setup in $\tau$-bench.
+\paragraph{Baseline (no planning).} The standard function-calling setup in $\tau$-bench.
 
-\textbf{Rule-based.} A regex-based decomposer extracts action verbs and entity patterns from the user's first utterance. Cost: \$0. On the full 115-task retail set, 27.5\% of tasks receive zero sub-goals and 61.4\% receive only one.
+\paragraph{Rule-based.} A regex-based decomposer extracts action verbs and entity patterns from the user's first utterance. Cost: \$0. On the full 115-task retail set, 27.5\% of tasks receive zero sub-goals and 61.4\% receive only one.
 
-\textbf{Oracle.} A human annotator produces gold sub-goal triples from task instructions and ground-truth actions. We construct oracle sub-goals for 22 complex tasks selected by two criteria: $\geq$7 ground-truth actions (top 19\% of action-count distribution) and baseline pass rate below 3/3. This subset selection conditions on baseline performance, so absolute numbers are specific to these 22 tasks; relative comparisons across conditions remain valid.
+\paragraph{Oracle.} A human annotator produces gold sub-goal triples from task instructions and ground-truth actions. We construct oracle sub-goals for 22 complex tasks selected by two criteria: $\geq$7 ground-truth actions (top 19\% of action-count distribution) and baseline pass rate below 3/3. This subset selection conditions on baseline performance, so absolute numbers are specific to these 22 tasks; relative comparisons across conditions remain valid.
 
-\textbf{Automated (tiny-LM).} Claude Haiku~4.5 receives the user's first utterance and a structured prompt requesting JSON sub-goals. Cost: ${\sim}\$0.0007$/call (0.08\% of executor cost).
+\paragraph{Automated (tiny-LM).} Claude Haiku~4.5 receives the user's first utterance and a structured prompt requesting JSON sub-goals. Cost: ${\sim}\$0.0007$/call (0.08\% of executor cost).
 
-\textbf{Same-model (ablation).} gpt-4o as both decomposer and executor, with the identical prompt and output format as the tiny-LM condition. Cost: ${\sim}\$0.001$/call. If the quality gap is model-driven, same-model should approach oracle; if information-limited, it should cluster with tiny-LM.
+\paragraph{Same-model (ablation).} gpt-4o as both decomposer and executor, with the identical prompt and output format as the tiny-LM condition. Cost: ${\sim}\$0.001$/call. If the quality gap is model-driven, same-model should approach oracle; if information-limited, it should cluster with tiny-LM.
 
 All five conditions share the same executor (gpt-4o, 2026 snapshot, temperature~0), user simulator (gpt-4o), and seeds (42, 43, 44). The decomposer output is injected into the agent's system prompt at turn~0; all subsequent turns proceed through the standard $\tau$-bench pipeline.
 
@@ -114,10 +109,9 @@ All five conditions share the same executor (gpt-4o, 2026 snapshot, temperature~
 
 We annotate all 215 failed baseline trajectories (139 retail, 76 airline) using an LLM-as-judge pipeline \citep{zheng2023judging}. A gpt-4o-mini judge classifies each failure into one of seven categories. A 10-sample human spot-check yields 80\% agreement on failure category (8/10). Disagreements arise when the judge labels incomplete execution as \texttt{partial\_resolve} where the human identifies an underlying \texttt{wrong\_decision}. The spot-check identifies one \texttt{user\_led\_astray} case (10\%) where the judge reports 0\%, confirming under-annotation.
 
-\begin{table}[H]
-\centering
+\begin{center}
 \small
-\caption{Failure taxonomy (LLM-as-judge, $n$=215).}
+\captionof{table}{Failure taxonomy (LLM-as-judge, $n$=215).}
 \label{tab:taxonomy}
 \begin{tabular}{lrr}
 \toprule
@@ -131,7 +125,7 @@ user\_led\_astray & 0\% & 0\% \\
 unknown & 0.7\% & 0\% \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{center}
 
 Two categories dominate: \texttt{wrong\_decision} and \texttt{partial\_resolve} together account for 87.8\% of retail and 92.1\% of airline failures. We flag one known bias: the decomposition-relevant flag is set at ${\sim}$98\%, likely inflated; the human spot-check suggests ${\sim}$80\%. Our oracle experiment (\S\ref{sec:main}) provides a stronger test of the planning hypothesis than the taxonomy alone.
 
@@ -148,12 +142,12 @@ We reproduce the $\tau$-bench baseline with the 2026 gpt-4o snapshot: $\tau$-ret
 
 Table~\ref{tab:main} presents the main experiment on 22 complex retail tasks. The oracle condition improves mean pass\textsuperscript{1} by 22.7\,pp over the baseline (OR=3.5 in pooled analysis; directionally consistent across all three seeds; see \S\ref{sec:stats} for majority-vote robustness analysis). The tiny-LM gains only 1.5\,pp ($p=1.0$). The same-model ablation gains 0.0\,pp ($p=0.838$), ruling out model capability as the primary driver. Oracle pass\textsuperscript{3} reaches 7/22 (31.8\%) vs.\ baseline 0/22 (0\% by selection criterion).
 
-\begin{table}[H]
-\centering
+\begin{center}
 \small
-\caption{Five-condition comparison (22 complex retail tasks, 3 seeds). $^\dagger$Pooled $n$=66; within-task correlation inflates effective $n$. Majority-vote ($n$=22) yields $p$=0.75; see \S\ref{sec:stats}.}
+\captionof{table}{Five-condition comparison (22 complex retail tasks, 3 seeds). $^\dagger$Pooled $n$=66; within-task correlation inflates effective $n$. Majority-vote ($n$=22) yields $p$=0.75; see \S\ref{sec:stats}.}
 \label{tab:main}
-\begin{tabular}{lccccc}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lccccc@{}}
 \toprule
 Condition & S42 & S43 & S44 & Mean$\pm$std & $\Delta$ \\
 \midrule
@@ -164,9 +158,17 @@ Tiny-LM & 31.8 & 36.4 & 40.9 & 36.4$\pm$4.5 & +1.5 \\
 Same-model & 36.4 & 36.4 & 31.8 & 34.8$\pm$2.6 & +0.0 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{center}
 
 The planning quality gap, defined as the difference between oracle and same-model planning, is \textbf{22.7\,pp} (oracle 57.6\% vs.\ same-model 34.8\%; same-model chosen as reference because it controls for model capability). The gap against tiny-LM is 21.2\,pp.
+
+Figure~\ref{fig:conditions} visualises the main result. Oracle planning is the only condition with meaningful improvement; the overlapping error bars between oracle and baseline illustrate why the majority-vote test ($n$=22) lacks power despite a large effect size.
+
+\begin{center}
+\includegraphics[width=\linewidth]{figures/fig_conditions.png}
+\captionof{figure}{Mean pass$^1$ ($\pm$1 std across 3 seeds) for five planning conditions on 22 complex retail tasks. Oracle planning (+22.7\,pp) is the only condition with meaningful improvement. Automated planners also reduce cross-seed variance (narrowing error bars).}
+\label{fig:conditions}
+\end{center}
 
 
 \subsection{Statistical Tests}\label{sec:stats}
@@ -189,14 +191,14 @@ All planning conditions reduce cross-seed variance. The coefficient of variation
 
 Why does automated planning fail to capture oracle-level quality? Table~\ref{tab:quality} compares sub-goal characteristics.
 
-\begin{table}[H]
-\centering
+\begin{center}
 \small
-\caption{Sub-goal quality comparison.}
+\captionof{table}{Sub-goal quality comparison.}
 \label{tab:quality}
-\begin{tabular}{lccc}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
 \toprule
-Metric & Oracle & Tiny-LM & Same-model \\
+Metric & Oracle & Tiny-LM & Same \\
 \midrule
 Mean sub-goals/task & 3.0 & 1.5 & 1.4 \\
 Distinct action types & 6 & 1.4 & 6 \\
@@ -204,10 +206,9 @@ Entities ``(unclear)'' & 0\% & 18\% & 30\% \\
 Tasks $<$0.5$\times$ oracle & 0/22 & 10/22 & 15/22 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{center}
 
-The primary failure mode is \emph{under-decomposition}: both automated planners generate $<$50\% of oracle sub-goals (1.5 and 1.4 vs.\ 3.0). The same-model planner uses all 6 action types but still under-decomposes and marks 30\% of entities as ``(unclear).'' For example, Task~23 requires three operations (exchange helmet, exchange luggage set, modify grill). Both automated planners produce a single sub-goal targeting only the helmet. The identical failure pattern across a 175$\times$ cost difference rules out model capability as the primary driver; the bottleneck is information available in the first utterance.
-
+The primary failure mode is \emph{under-decomposition}: both automated planners generate $<$50\% of oracle sub-goals (1.5 and 1.4 vs.\ 3.0). The same-model planner uses all 6 action types but still under-decomposes and marks 30\% of entities as ``(unclear).'' For example, Task~23 requires three operations (exchange helmet, exchange luggage set, modify grill). Both automated planners produce a single sub-goal targeting only the helmet. The identical failure pattern despite gpt-4o costing 1.4$\times$ more per call rules out model capability as the primary driver; the bottleneck is information available in the first utterance.
 
 Both decomposers add $<$0.12\% of executor cost (\$0.0007--\$0.001/call vs.\ ${\sim}$\$0.85/task). The bottleneck is decomposition \emph{quality}, not cost.
 
@@ -225,8 +226,8 @@ Oracle planning yields the largest gain (+22.7\,pp, OR=3.5). Neither automated c
 The 22.7\,pp gap quantifies the improvement available if decomposer quality can be raised. Three shared failure modes suggest directions:
 
 \begin{enumerate}
-\item \textbf{Under-decomposition.} Mean 1.5 sub-goals vs.\ oracle's 3.0; 45\% of tasks receive $<$50\% of oracle sub-goals.
-\item \textbf{Action-type collapse.} Automated planners default to 1--2 action types (mean 1.4) vs.\ oracle's full range of 6.
+\item \textbf{Under-decomposition.} Mean 1.5 sub-goals vs.\ oracle's 3.0; 45--68\% of tasks receive $<$50\% of oracle sub-goals.
+\item \textbf{Action-type collapse.} The tiny-LM planner defaults to 1--2 action types (mean 1.4) vs.\ oracle's full range of 6; the same-model planner uses all 6 types but still under-decomposes.
 \item \textbf{Entity ambiguity.} 18--30\% of entities marked unclear. The first utterance uses pronouns and partial descriptions.
 \end{enumerate}
 
@@ -251,11 +252,95 @@ On $\tau$-bench compound tasks, pre-execution planning has high headroom: oracle
 
 The decomposer adds $<$0.12\% of executor cost. Cost is not the bottleneck; decomposition quality is. Closing the gap requires decomposers that operate on more than the first utterance: multi-turn context, retrieval-augmented planning, or domain-specific schemas. We release all code, oracle sub-goals, and failure annotations.
 
+% ═══════════════════════════════════════════════════════════════
+\section*{Acknowledgments}
+% ═══════════════════════════════════════════════════════════════
+
+We thank the $\tau$-bench authors for releasing their benchmark and code. An LLM assistant (Claude, Anthropic) was used for proofreading and stylistic editing of the manuscript. All research design, experiments, analysis, and initial drafting were conducted solely by the author.
+
+% ═══════════════════════════════════════════════════════════════
+\section*{Reproducibility Statement}
+% ═══════════════════════════════════════════════════════════════
+
+Code, oracle sub-goals, failure annotations, and per-seed trajectories: \url{https://github.com/drewOrc/tau-bench-decomposition} (MIT). Executor and user simulator: gpt-4o (2026 snapshot, temperature~0). Decomposer (tiny-LM): \texttt{claude-haiku-4-5-20251001}. Same-model decomposer: gpt-4o with identical prompt. Seeds: 42, 43, 44. Executor cost: ${\sim}$\$0.85/task. The five-condition experiment runs 22 tasks $\times$ 3 seeds $\times$ 5 conditions; baseline reproduction runs 165 tasks $\times$ 3 seeds.
+
+% ═══════════════════════════════════════════════════════════════
+% References
+% ═══════════════════════════════════════════════════════════════
+
+\begin{thebibliography}{14}
+
+\bibitem[Chen(2026)]{chen2026routing}
+Bo-Yu Chen. 2026.
+\newblock Cost-Aware Hybrid Routing for Intent Classification: 74\% {LLM} Cost Reduction at Equal Accuracy.
+\newblock \emph{arXiv preprint}.
+
+\bibitem[Chen et~al.(2023)]{chen2023frugalgpt}
+Lingjiao Chen, Matei Zaharia, and James Zou. 2023.
+\newblock {FrugalGPT}: How to Use Large Language Models While Reducing Cost and Improving Performance.
+\newblock In \emph{Proceedings of ICML}.
+
+\bibitem[Jimenez et~al.(2024)]{jimenez2024swebench}
+Carlos~E. Jimenez, John Yang, Alexander Wettig, Shunyu Yao, Kexin Pei, Ofir Press, and Karthik Narasimhan. 2024.
+\newblock {SWE}-bench: Can Language Models Resolve Real-World {GitHub} Issues?
+\newblock In \emph{Proceedings of ICLR}.
+
+\bibitem[Khot et~al.(2023)]{khot2023decomposed}
+Tushar Khot, Harsh Trivedi, Matthew Finlayson, Yao Fu, Kyle Richardson, Peter Clark, and Ashish Sabharwal. 2023.
+\newblock Decomposed Prompting: A Modular Approach for Solving Complex Tasks.
+\newblock In \emph{Proceedings of ICLR}.
+
+\bibitem[Prasad et~al.(2024)]{prasad2024adapt}
+Archiki Prasad, Alexander Koller, Mareike Hartmann, Peter Clark, Ashish Sabharwal, Mohit Bansal, and Tushar Khot. 2024.
+\newblock {ADaPT}: As-Needed Decomposition and Planning with Language Models.
+\newblock In \emph{Proceedings of NAACL}.
+
+\bibitem[Shen et~al.(2023)]{shen2023hugginggpt}
+Yongliang Shen, Kaitao Song, Xu Tan, Dongsheng Li, Weiming Lu, and Yueting Zhuang. 2023.
+\newblock {HuggingGPT}: Solving {AI} Tasks with {ChatGPT} and its Friends in {Hugging Face}.
+\newblock In \emph{Proceedings of NeurIPS}.
+
+\bibitem[Shinn et~al.(2023)]{shinn2023reflexion}
+Noah Shinn, Federico Cassano, Ashwin Gopinath, Karthik Narasimhan, and Shunyu Yao. 2023.
+\newblock Reflexion: Language Agents with Verbal Reinforcement Learning.
+\newblock In \emph{Proceedings of NeurIPS}.
+
+\bibitem[Wang et~al.(2023)]{wang2023plan}
+Lei Wang, Wanyu Xu, Yihuai Lan, Zhiqiang Hu, Yunshi Lan, Roy Ka-Wei Lee, and Ee-Peng Lim. 2023.
+\newblock Plan-and-Solve Prompting: Improving Zero-Shot Chain-of-Thought Reasoning by Large Language Models.
+\newblock In \emph{Proceedings of ACL}.
+
+\bibitem[Yao et~al.(2023a)]{yao2023react}
+Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik Narasimhan, and Yuan Cao. 2023a.
+\newblock {ReAct}: Synergizing Reasoning and Acting in Language Models.
+\newblock In \emph{Proceedings of ICLR}.
+
+\bibitem[Yao et~al.(2023b)]{yao2023tree}
+Shunyu Yao, Dian Yu, Jeffrey Zhao, Izhak Shafran, Thomas~L. Griffiths, Yuan Cao, and Karthik Narasimhan. 2023b.
+\newblock Tree of Thoughts: Deliberate Problem Solving with Large Language Models.
+\newblock In \emph{Proceedings of NeurIPS}.
+
+\bibitem[Yao et~al.(2024)]{yao2024tau}
+Shunyu Yao, Ankit Shinde, Karthik Narasimhan, and Yuntao Bai. 2024.
+\newblock $\tau$-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains.
+\newblock \emph{arXiv preprint arXiv:2406.12045}.
+
+\bibitem[Zheng et~al.(2023)]{zheng2023judging}
+Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu, Yonghao Zhuang, Zi Lin, Zhuohan Li, Dacheng Li, Eric~P. Xing, et~al. 2023.
+\newblock Judging {LLM}-as-a-Judge with {MT}-Bench and Chatbot Arena.
+\newblock In \emph{Proceedings of NeurIPS}.
+
+\bibitem[Zhou et~al.(2023)]{zhou2023least}
+Denny Zhou, Nathaniel Sch{\"a}rli, Le Hou, Jason Wei, Nathan Scales, Xuezhi Wang, Dale Schuurmans, Claire Cui, Olivier Bousquet, Quoc Le, and Ed Chi. 2023.
+\newblock Least-to-Most Prompting Enables Complex Reasoning in Large Language Models.
+\newblock In \emph{Proceedings of ICLR}.
+
+\bibitem[Zhou et~al.(2024)]{zhou2024webarena}
+Shuyan Zhou, Frank~F. Xu, Hao Zhu, Xuhui Zhou, Robert Lo, Abishek Sridhar, Xianyi Cheng, Tianyue Ou, Yonatan Bisk, Daniel Fried, Uri Alon, and Graham Neubig. 2024.
+\newblock {WebArena}: A Realistic Web Environment for Building Autonomous Agents.
+\newblock In \emph{Proceedings of ICLR}.
+
+\end{thebibliography}
+
 \end{multicols}
-
-% ═══════════════════════════════════════════════════════════════
-\bibliographystyle{plainnat}
-\bibliography{references}
-% ═══════════════════════════════════════════════════════════════
-
 \end{document}
