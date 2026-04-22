@@ -4,6 +4,48 @@
 
 ---
 
+## 2026-04-22 — Phase D: LaTeX figures + 3-expert review + submission-ready
+
+### 本次工作 / 執行摘要
+- **LaTeX 已完成**（前次 session 建立 main.tex + references.bib，本次發現已存在）
+- **架構圖（Figure 1）**：baseline vs ours pipeline 對比，含 cost label（<$0.001 vs ~$0.85）
+- **Conditions 圖（Figure 2）升級**：加入 quality gap 雙向箭頭 + baseline 虛線參考
+- **Figure 生成腳本**：`scripts/gen_paper_figures.py`（可重現）
+- **3 輪 expert review**：
+  - 假教授 🟢 Accept（checklist 23/23 全過）
+  - HR姐 🟢 PASS（Clarity 5, Credibility 5, Differentiation 5）
+  - 阿讀 🟢 合格 4/5（14 citations 覆蓋完整，no-prior-work claim 驗證通過）
+- **Prose 修正 3 項**：meta-language fix、caption cost 範圍修正、post-hoc power analysis
+- **Turnitin self-check**：零 AI tell、句長 std dev 高、標點多樣
+- **Visual spacing check**：6/6 頁 300 DPI 全通過
+- **中文翻譯 + 簡單解釋版**：`main_zh.md` + `explainer.md/pdf`（前次 session）
+
+### 核心發現 / 數據
+- (無新實驗數據，本次為 paper polish + review)
+- Post-hoc power analysis：~55 tasks needed to detect 22.7pp effect at α=0.05, 80% power
+
+### Blockers / 遇到的問題
+- (無)
+
+### Next
+- [x] ~~Wave 2: LaTeX conversion (.tex)~~ — 已完成
+- [x] ~~Wave 2: figures~~ — 2 張（architecture + conditions），6 頁 workshop paper 足夠
+- [x] ~~Wave 2: References .bib file~~ — 14 篇已完成
+- [x] ~~Push updated code + results to GitHub~~ — `eb2f59a` pushed
+- [ ] （可選）再跑一輪假教授 deep review 後投稿
+- [ ] 投稿目標 workshop（待選定 venue）
+
+### Files / Budget
+- New: `scripts/gen_paper_figures.py`
+- New: `paper/figures/fig_architecture.png`
+- Modified: `paper/figures/fig_conditions.png`（quality gap annotation）
+- Modified: `paper/main.tex`（3 prose fixes + architecture figure + power analysis）
+- Modified: `paper/main.pdf`（6 pages, 210KB）
+- New: `paper/main_zh.md`、`paper/explainer.md/pdf/tex`（前次 session）
+- API cost: $0（純寫作 + review）
+
+---
+
 ## 2026-04-21 — Phase D: Same-model ablation + Wave 1 fixes
 
 ### 本次工作 / 執行摘要
