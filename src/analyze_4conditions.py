@@ -60,8 +60,7 @@ def find_checkpoint(result_dir: str, seed: int) -> str | None:
 
 
 def main():
-    # ---- Load data ----
-    # condition -> seed -> {task_id: reward}
+    # {condition: {seed: {task_id: reward}}}
     all_data: dict[str, dict[int, dict[int, float]]] = {}
 
     for cond_name, cond_info in CONDITIONS.items():
@@ -77,7 +76,6 @@ def main():
                 rewards = {tid: rewards[tid] for tid in SUBSET_22 if tid in rewards}
             all_data[cond_name][seed] = rewards
 
-    # ---- Summary table ----
     print("=" * 70)
     print("4-CONDITION COMPARISON ON 22-TASK COMPLEX SUBSET")
     print("=" * 70)
@@ -109,7 +107,6 @@ def main():
 
         print(f"{cond_name:<15} {seed_strs[0]:>10} {seed_strs[1]:>10} {seed_strs[2]:>10} {mean_rate:>9.1f}% {std_rate:>7.1f}pp")
 
-    # ---- Deltas from baseline ----
     print()
     print("Deltas from baseline:")
     baseline_mean = condition_means.get("baseline", 0)
@@ -119,7 +116,6 @@ def main():
         delta = condition_means[cond_name] - baseline_mean
         print(f"  {cond_name}: {delta:+.1f}pp")
 
-    # ---- Per-task analysis ----
     print()
     print("=" * 70)
     print("PER-TASK PASS RATES (across 3 seeds)")
@@ -155,7 +151,6 @@ def main():
         row += f"  {delta*100:+5.0f}pp {marker}"
         print(row)
 
-    # ---- Statistical tests (oracle vs baseline, tiny-lm vs baseline) ----
     print()
     print("=" * 70)
     print("STATISTICAL TESTS (pooled across seeds)")
@@ -229,7 +224,6 @@ def main():
     except ImportError:
         print("scipy not installed — skipping statistical tests")
 
-    # ---- Decomposer cost summary ----
     print()
     print("=" * 70)
     print("DECOMPOSER COST SUMMARY")

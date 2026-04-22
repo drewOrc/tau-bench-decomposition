@@ -49,8 +49,6 @@ PAIRWISE_COMPARISONS = [
 PASS_THRESHOLD = 0.999
 
 
-# ── Data loading (same pattern as existing scripts) ─────────────────────
-
 def load_rewards_by_task(path: str) -> dict[int, float]:
     """Load checkpoint JSON, return {task_id: reward}."""
     with open(path) as f:
@@ -67,8 +65,6 @@ def find_checkpoint(result_dir: str, seed: int) -> str | None:
     ckpts = sorted(glob.glob(str(base / "tool-calling-*.json")))
     return ckpts[-1] if ckpts else None
 
-
-# ── Majority vote ───────────────────────────────────────────────────────
 
 def majority_vote(
     seed_rewards: dict[int, dict[int, float]],
@@ -87,8 +83,6 @@ def majority_vote(
         result[tid] = 1 if passes >= 2 else 0
     return result
 
-
-# ── McNemar with continuity correction ──────────────────────────────────
 
 def mcnemar_test(
     vec_a: list[int],
@@ -129,8 +123,6 @@ def odds_ratio(b: int, c: int) -> str:
     return f"{c / b:.2f}  (c/b = {c}/{b})"
 
 
-# ── Pooled McNemar (for comparison) ─────────────────────────────────────
-
 def pooled_mcnemar(
     data_a: dict[int, dict[int, float]],
     data_b: dict[int, dict[int, float]],
@@ -149,10 +141,7 @@ def pooled_mcnemar(
     return a, b, c, d, chi2_stat, p_val, len(vec_a)
 
 
-# ── Main ────────────────────────────────────────────────────────────────
-
 def main() -> None:
-    # ---- Load all data ----
     all_data: dict[str, dict[int, dict[int, float]]] = {}
     for cond_name, cond_info in CONDITIONS.items():
         all_data[cond_name] = {}
@@ -166,14 +155,10 @@ def main() -> None:
                 rewards = {tid: rewards[tid] for tid in SUBSET_22 if tid in rewards}
             all_data[cond_name][seed] = rewards
 
-    # ---- Compute majority-vote vectors ----
     mv: dict[str, dict[int, int]] = {}
     for cond_name in CONDITIONS:
         mv[cond_name] = majority_vote(all_data[cond_name], SUBSET_22)
 
-    # ================================================================
-    # 1. PER-CONDITION MAJORITY-VOTE PASS RATES
-    # ================================================================
     print("=" * 72)
     print("MAJORITY-VOTE McNEMAR ANALYSIS  (n=22 independent tasks)")
     print("  Vote rule: task passes if reward >= 0.999 on >= 2 of 3 seeds")
@@ -200,9 +185,6 @@ def main() -> None:
             f"   [{', '.join(raw_rates)}]"
         )
 
-    # ================================================================
-    # 2. PER-TASK DETAIL TABLE
-    # ================================================================
     print("\n--- Per-task majority-vote detail ---\n")
     header = f"{'Task':>6}"
     for cond_name in CONDITIONS:
@@ -225,9 +207,6 @@ def main() -> None:
             row += f"  {n_pass_seeds}/3->{mv_label:>1}"
         print(row)
 
-    # ================================================================
-    # 3. ALL PAIRWISE McNEMAR TESTS (majority vote, n=22)
-    # ================================================================
     print("\n" + "=" * 72)
     print("PAIRWISE McNEMAR TESTS  (majority vote, n=22)")
     print("=" * 72)
@@ -259,9 +238,6 @@ def main() -> None:
         else:
             print(f"  McNemar: no discordant pairs (cannot compute)")
 
-    # ================================================================
-    # 4. COMPARISON: MAJORITY-VOTE vs POOLED McNEMAR
-    # ================================================================
     print("\n" + "=" * 72)
     print("COMPARISON: MAJORITY-VOTE (n=22) vs POOLED (n=66)")
     print("=" * 72)
@@ -300,9 +276,6 @@ def main() -> None:
             f"{label:<28} {p_p_str:>10} {p_mv_str:>10} {b_p + c_p:>12} {b_mv + c_mv:>8} {verdict:>14}"
         )
 
-    # ================================================================
-    # 5. INTERPRETATION
-    # ================================================================
     print("\n" + "=" * 72)
     print("INTERPRETATION")
     print("=" * 72)

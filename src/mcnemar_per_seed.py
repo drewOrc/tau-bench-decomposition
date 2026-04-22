@@ -63,7 +63,6 @@ def mcnemar_test(bl_vec, test_vec, label=""):
 
 
 def main():
-    # ---- Load data ----
     all_data = {}
     for cond_name, cond_info in CONDITIONS.items():
         all_data[cond_name] = {}
@@ -77,9 +76,6 @@ def main():
                 rewards = {tid: rewards[tid] for tid in SUBSET_22 if tid in rewards}
             all_data[cond_name][seed] = rewards
 
-    # ====================================================================
-    # 1. PER-SEED McNEMAR: ORACLE vs BASELINE
-    # ====================================================================
     print("=" * 70)
     print("1. PER-SEED McNEMAR: ORACLE vs BASELINE (22-task complex subset)")
     print("=" * 70)
@@ -123,9 +119,6 @@ def main():
         if flipped_or_to_bl:
             print(f"  Tasks lost by oracle (bl pass -> or fail):   {flipped_or_to_bl}")
 
-    # ====================================================================
-    # 1b. POOLED McNEMAR: ORACLE vs BASELINE (confirmation of p=0.007)
-    # ====================================================================
     print("\n" + "=" * 70)
     print("1b. POOLED McNEMAR: ORACLE vs BASELINE (all seeds, 66 observations)")
     print("=" * 70)
@@ -149,9 +142,6 @@ def main():
     if chi2_stat is not None:
         print(f"  McNemar chi2 = {chi2_stat:.4f}, p = {p_val:.4f}  {'*' if p_val < 0.05 else 'n.s.'}")
 
-    # ====================================================================
-    # 2. POOLED McNEMAR: ORACLE vs TINY-LM
-    # ====================================================================
     print("\n" + "=" * 70)
     print("2. POOLED McNEMAR: ORACLE vs TINY-LM (all seeds)")
     print("=" * 70)
@@ -190,9 +180,6 @@ def main():
         p_str = f"p={p_val:.4f}" if p_val is not None else "no discordant"
         print(f"    Seed {seed}: or={sum(ov)}/{n}, tl={sum(tv)}/{n}, a={a} b={b} c={c} d={d}, {p_str}")
 
-    # ====================================================================
-    # 3. CONSISTENCY ANALYSIS
-    # ====================================================================
     print("\n" + "=" * 70)
     print("3. CONSISTENCY ANALYSIS: Is pooled p=0.007 driven by one seed?")
     print("=" * 70)

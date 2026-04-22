@@ -28,3 +28,9 @@ data/trajectories/raw_*.json
 
 # Logs
 *.log
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.out

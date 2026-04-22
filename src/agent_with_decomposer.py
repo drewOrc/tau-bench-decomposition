@@ -84,14 +84,12 @@ class ToolCallingAgentWithDecomposer(ToolCallingAgent):
         info = env_reset_res.info.model_dump()
         reward = 0.0
 
-        # === Step 1: decompose the first user utterance ===
         decomp: DecompositionResult = self.decomposer.decompose(
             obs, domain=self.domain, task_index=task_index
         )
         hint = decomp.to_system_hint()
         total_cost += decomp.cost_usd
 
-        # === Step 2: build initial message stack with sub-goal hint ===
         system_content = self.wiki
         user_content = obs
         if hint:
@@ -106,7 +104,7 @@ class ToolCallingAgentWithDecomposer(ToolCallingAgent):
             {"role": "user", "content": user_content},
         ]
 
-        # === Step 3: standard tool-calling loop (copied from base) ===
+        # Mirrors ToolCallingAgent.solve() loop
         for _ in range(max_num_steps):
             res = completion(
                 messages=messages,
@@ -144,7 +142,6 @@ class ToolCallingAgentWithDecomposer(ToolCallingAgent):
             if env_response.done:
                 break
 
-        # === Step 4: attach decomposition diagnostics to info ===
         info["decomposition"] = {
             "source": decomp.source,
             "n_sub_goals": len(decomp.sub_goals),
