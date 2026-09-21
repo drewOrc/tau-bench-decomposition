@@ -85,7 +85,7 @@ tau-bench-decomposition/
 ├── DEVLOG.md                         ← experiment log (newest first)
 ├── EXPERIMENT_DESIGN.md              ← hypotheses + falsification criteria
 ├── paper/
-│   ├── main.tex/pdf                  ← workshop paper (LaTeX)
+│   ├── main.tex/pdf                  ← full write-up (LaTeX)
 │   ├── main_zh.md                    ← 完整中文翻譯
 │   └── explainer.md/pdf              ← 簡單解釋版（非技術讀者）
 ├── requirements.txt                  ← pinned Python dependencies
@@ -95,7 +95,8 @@ tau-bench-decomposition/
 │   ├── 02_setup_guide.md             ← install, env vars, smoke test, budget
 │   ├── 05_related_work.md            ← literature positioning (2×2 matrix)
 │   └── 06_paper_outline.md           ← paper structure
-├── vendor/tau-bench-clean/           ← upstream repo (gitignored, commit 59a200c)
+├── vendor/tau-bench-clean/           ← upstream tau-bench, pinned to 59a200c
+│                                       (gitignored; clone it yourself, see Quick Start)
 ├── data/
 │   ├── oracle_subgoals.json          ← gold sub-goals for 22 complex tasks
 │   ├── annotations/                  ← failure annotations (215 total) + 10-sample spot-check
@@ -129,28 +130,32 @@ tau-bench-decomposition/
 ## Quick Start
 
 ```bash
-# 1. Create venv and install
+# 1. Fetch tau-bench (upstream, not vendored here; pinned for reproducibility)
+git clone https://github.com/sierra-research/tau-bench vendor/tau-bench-clean
+git -C vendor/tau-bench-clean checkout 59a200c
+
+# 2. Create venv and install
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e vendor/tau-bench-clean/
 pip install -r requirements.txt
 
-# 2. Set API keys
+# 3. Set API keys
 cp .env.example .env  # then fill in OPENAI_API_KEY and ANTHROPIC_API_KEY
 
-# 3. Smoke test (1 task)
+# 4. Smoke test (1 task)
 python src/run_baseline.py --env retail --task-ids 0 --seeds 42
 
-# 4. Full baseline (3 seeds)
+# 5. Full baseline (3 seeds)
 python src/run_baseline.py --env retail --seeds 42 43 44 --concurrency 1
 
-# 5. Run decomposer experiment (e.g., oracle on 22 complex tasks)
+# 6. Run decomposer experiment (e.g., oracle on 22 complex tasks)
 python src/run_decomposer.py --env retail --seeds 42 43 44 --decomposer oracle --concurrency 2
 
-# 6. Compare all 5 conditions
+# 7. Compare all 5 conditions
 python src/analyze_4conditions.py
 
-# 7. Majority-vote McNemar robustness check
+# 8. Majority-vote McNemar robustness check
 python src/mcnemar_majority_vote.py
 ```
 
@@ -169,15 +174,14 @@ python src/mcnemar_majority_vote.py
 - [x] Same-model ablation (gpt-4o planner, +0.0pp; rules out model capability)
 - [x] Majority-vote McNemar robustness check (n=22 independent tasks)
 - [x] 10-sample human spot-check of failure taxonomy (80% agreement)
-- [x] Workshop paper draft ("Cheap Decomposition, Expensive Execution")
+- [x] Full write-up ("Cheap Decomposition, Expensive Execution")
 
 ---
 
-## Connection to Application Story
+## Why This Study
 
-This experiment directly supports the MiuLab application:
-1. **Agent reasoning, not classification** — addresses the critique that CLINC150 was "just classification"
-2. **Public benchmark** — τ-bench is from Sierra (Yao et al. 2024), credible baseline
-3. **Narrative continuity** — extends the cost-aware cascade story from single-turn to multi-turn
-4. **Reproducibility** — MIT-licensed public code + fixed seeds
-5. **Novel contribution** — first quantification of decomposition quality gap on multi-turn tool-agent tasks
+1. **Multi-turn tool use, not classification.** Extends the cost-aware cascade question from single-turn intent routing to multi-step agent planning.
+2. **Public benchmark.** tau-bench (Yao et al., 2024, Sierra), with a pinned upstream commit so the baseline is checkable.
+3. **Ceiling before method.** The oracle condition measures what perfect decomposition is worth before asking whether any automated decomposer can reach it, so a null result on the method is still informative about the ceiling.
+4. **Ablation over speculation.** The same-model condition rules out "the decomposer model was too weak" as a competing explanation.
+5. **Reproducible.** MIT-licensed code, fixed seeds (42/43/44), per-seed numbers reported, and the underpowered significance test reported next to the effect size.
